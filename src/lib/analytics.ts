@@ -1,13 +1,27 @@
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
 
-const PROPERTY_ID = process.env.GA4_PROPERTY_ID;
+const RAW_PROPERTY_ID = process.env.GA4_PROPERTY_ID;
+const PROPERTY_ID = RAW_PROPERTY_ID?.startsWith("properties/")
+  ? RAW_PROPERTY_ID.replace("properties/", "")
+  : RAW_PROPERTY_ID;
 
 function getAnalyticsClient() {
   const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-  if (!credentialsJson) {
-    throw new Error("GOOGLE_APPLICATION_CREDENTIALS_JSON env var is not set");
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  const credentials = credentialsJson
+    ? JSON.parse(credentialsJson)
+    : serviceAccountEmail && privateKey
+      ? { client_email: serviceAccountEmail, private_key: privateKey }
+      : null;
+
+  if (!credentials) {
+    throw new Error(
+      "GA4 credentials are missing. Set GOOGLE_APPLICATION_CREDENTIALS_JSON or GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY"
+    );
   }
-  const credentials = JSON.parse(credentialsJson);
+
   return new BetaAnalyticsDataClient({ credentials });
 }
 
