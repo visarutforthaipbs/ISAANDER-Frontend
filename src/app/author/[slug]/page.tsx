@@ -1,13 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Mail, Coffee, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { getAuthorBySlug } from "@/data/authors";
 import { fetchWixWriters, type WixWriter } from "@/lib/author-utils";
 import wixClient from "@/lib/wix-client";
 import { getPostImageUrl, formatDate } from "@/lib/utils";
 import { TipSection } from "@/components/tip-section";
 import { MobileBottomNav } from "@/components/navigation";
+import { TipButton, HireButton } from "@/components/share-button";
 
 // Social icons as inline SVGs to avoid extra dependencies
 function FacebookIcon() {
@@ -321,23 +322,15 @@ export default async function AuthorProfilePage({
                 );
               })}
 
-            <a
-              href={writer.hireEmail ? `mailto:${writer.hireEmail}` : `mailto:contact@theisaander.com?subject=Hire ${writer.name}`}
-              className="inline-flex items-center gap-2 bg-primary text-white font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-110 transition-all shadow-sm"
-            >
-              <Mail className="w-4 h-4" />
-              Hire Me
-            </a>
-
-            <a
-              href={writer.buyMeCoffeeUrl ?? "https://buymeacoffee.com/theisaander"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-accent text-text-main font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-95 transition-all shadow-sm"
-            >
-              <Coffee className="w-4 h-4" />
-              Buy Me a Coffee
-            </a>
+            <HireButton
+                writerName={writer.name}
+                hireEmail={writer.hireEmail ?? `contact@theisaander.com`}
+              />
+            <TipButton
+                writerName={writer.name}
+                promptPayId={writer.promptPayId}
+                promptPayName={writer.promptPayName}
+              />
           </div>
         </section>
 

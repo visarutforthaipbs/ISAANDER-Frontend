@@ -47,6 +47,17 @@ const authors: Author[] = [
       "$2b$10$6SwjFwuN4lmOs4Wu9GfKeOlk88et7CJmXVYTmA7qMmC8Ols35GM3C", // isaander2025
     revenueSharePercent: 60,
   },
+  {
+    slug: "thammaruja",
+    name: "ธรรมรุจา ธรรมสโรช", // only used as fallback
+    title: "นักเขียน",
+    bio: "",
+    avatar: "",
+    socialLinks: {},
+    wixMemberId: "503edaab-00c8-44b9-a757-e0239a78fb1774128",
+    promptPayId: "0627283058",
+    promptPayName: "ธรรมรุจา ธรรมสโรช",
+  },
   // --- Template: copy and fill in for new authors ---
   // {
   //   slug: "somchai",

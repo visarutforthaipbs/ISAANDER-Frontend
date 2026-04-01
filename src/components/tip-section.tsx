@@ -33,12 +33,18 @@ export function TipSection({ author }: TipSectionProps) {
       {/* Author mini profile */}
       <div className="flex items-center gap-3 mb-6 pb-5 border-b border-black/5">
         <Link href={`/author/${author.slug}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={author.avatar}
-            alt={author.name}
-            className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-          />
+          {author.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={author.avatar}
+              alt={author.name}
+              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+            />
+          ) : (
+            <span className="w-12 h-12 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-prompt font-bold text-primary text-lg">
+              {author.name.charAt(0)}
+            </span>
+          )}
         </Link>
         <div className="flex-1 min-w-0">
           <Link

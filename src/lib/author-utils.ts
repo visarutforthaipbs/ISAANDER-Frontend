@@ -23,44 +23,52 @@ export function resolveAuthor(post: PostLike): Author {
   return getDefaultAuthor();
 }
 
-/** Cache of Wix member avatars (memberId → photo URL) */
-const memberAvatarCache = new Map<string, string>();
+/** Cache of Wix member profiles (memberId → { name, avatar }) */
+const memberAvatarCache = new Map<string, { name: string; avatar: string }>();
 
 /**
  * Async version of resolveAuthor that fetches the Wix member's
- * profile photo when no local author image is available.
+ * profile photo and name when no local author match is available.
  */
 export async function resolveAuthorAsync(
   post: PostLike
 ): Promise<{ name: string; avatar: string }> {
-  const base = resolveAuthor(post);
   const memberId = post.memberId;
 
-  // If the local avatar file actually exists as a URL (not a local path),
-  // or there's no memberId, return as-is
-  if (!memberId) return base;
+  if (!memberId) return getDefaultAuthor();
 
-  // Check if avatar is a real URL (from Wix) — if so, it's fine
-  if (base.avatar.startsWith("http")) return base;
+  // Check local author match first
+  const localMatch = getAuthorByWixMemberId(memberId);
 
-  // Try fetching the Wix member's photo
+  // If local match has an http avatar, return directly
+  if (localMatch && localMatch.avatar.startsWith("http")) return localMatch;
+
+  // Check cache
   if (memberAvatarCache.has(memberId)) {
     const cached = memberAvatarCache.get(memberId)!;
-    return { name: base.name, avatar: cached || base.avatar };
+    return {
+      name: cached.name,
+      avatar: cached.avatar || localMatch?.avatar || "",
+    };
   }
 
   try {
     const member = await wixClient.members.getMember(memberId, {
       fieldsets: ["FULL"],
     });
+    const firstName = member?.contact?.firstName ?? "";
+    const lastName = member?.contact?.lastName ?? "";
+    const name = localMatch?.name
+      || (firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname || "นักเขียน");
     const photo = member?.profile?.photo?.url ?? "";
-    memberAvatarCache.set(memberId, photo);
-    return { name: member?.contact?.firstName && member?.contact?.lastName
-      ? `${member.contact.firstName} ${member.contact.lastName}`
-      : base.name, avatar: photo || base.avatar };
+
+    const resolved = { name, avatar: photo };
+    memberAvatarCache.set(memberId, resolved);
+    return { name, avatar: photo || localMatch?.avatar || "" };
   } catch {
-    memberAvatarCache.set(memberId, "");
-    return base;
+    const fallback = localMatch || getDefaultAuthor();
+    memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
+    return fallback;
   }
 }
 
@@ -121,7 +129,7 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
   const localAuthors = getAllAuthors();
 
   for (const [memberId, postCount] of memberPostCount) {
-    // Check if we have a local author config
+    // Check if we have a local author config (by wixMemberId)
     const local = localAuthors.find((a) => a.wixMemberId === memberId);
 
     try {
@@ -129,23 +137,29 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         fieldsets: ["FULL"],
       });
 
+      // Also try matching local config by the Wix profile slug
+      const profileSlug = member?.profile?.slug;
+      const localBySlug = !local && profileSlug
+        ? localAuthors.find((a) => a.wixMemberId === profileSlug)
+        : undefined;
+      const merged = local ?? localBySlug;
+
       const name =
-        local?.name ??
+        merged?.name ??
         member?.contact?.firstName ??
         member?.profile?.nickname ??
         "นักเขียน";
       const lastName = member?.contact?.lastName ?? "";
-      const displayName = local?.name ?? (lastName ? `${name} ${lastName}` : name);
+      const displayName = merged?.name ?? (lastName ? `${name} ${lastName}` : name);
       const slug =
-        local?.slug ??
+        merged?.slug ??
         member?.profile?.slug ??
         memberId.slice(0, 8);
       const avatar =
-        local?.avatar ??
-        member?.profile?.photo?.url ??
+        (merged?.avatar || member?.profile?.photo?.url) ??
         "";
-      const title = local?.title ?? member?.profile?.title ?? "นักเขียน";
-      const bio = local?.bio ?? "";
+      const title = merged?.title ?? member?.profile?.title ?? "นักเขียน";
+      const bio = merged?.bio ?? "";
 
       writers.push({
         slug,
@@ -155,12 +169,12 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         avatar,
         postCount,
         wixMemberId: memberId,
-        hireEmail: local?.hireEmail,
-        buyMeCoffeeUrl: local?.buyMeCoffeeUrl,
-        promptPayId: local?.promptPayId,
-        promptPayName: local?.promptPayName,
-        revenueSharePercent: local?.revenueSharePercent ?? 60,
-        localAuthor: local,
+        hireEmail: merged?.hireEmail,
+        buyMeCoffeeUrl: merged?.buyMeCoffeeUrl,
+        promptPayId: merged?.promptPayId,
+        promptPayName: merged?.promptPayName,
+        revenueSharePercent: merged?.revenueSharePercent ?? 60,
+        localAuthor: merged,
       });
     } catch {
       // Member lookup failed — use local config or minimal fallback
