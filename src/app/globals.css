@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Primary brand colors */
+  --color-primary: #C15C3D;
+  /* Darkened from #8A9A5B → passes WCAG AA (5.2:1 on white) */
+  --color-secondary: #596C37;
+  --color-background: #F9F6F0;
+  --color-surface: #FFFFFF;
+  --color-text-main: #2D2D2D;
+  --color-text-muted: #6B7280;
+  /* Accent used for badges — keep gold but pair with dark text */
+  --color-accent: #E6A845;
+
+  /* Both font tokens now point to DB Helvethaica X (local font) */
+  --font-prompt: var(--font-dbhelvethaica);
+  --font-sarabun: var(--font-dbhelvethaica);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset anchor targets so sticky header doesn't cover them */
+  scroll-padding-top: 72px;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  font-family: var(--font-dbhelvethaica), sans-serif;
+}
+
+/* ---- Skip-to-content link (screen readers + keyboard users) ---- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-dbhelvethaica), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* ---- Global focus-visible ring ---- */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Hide scrollbar for carousel */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
