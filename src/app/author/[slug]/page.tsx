@@ -6,7 +6,6 @@ import { getAuthorBySlug } from "@/data/authors";
 import { fetchWixWriters, type WixWriter } from "@/lib/author-utils";
 import wixClient from "@/lib/wix-client";
 import { getPostImageUrl, formatDate } from "@/lib/utils";
-import { TipSection } from "@/components/tip-section";
 import { MobileBottomNav } from "@/components/navigation";
 import { TipButton, HireButton } from "@/components/share-button";
 
@@ -393,13 +392,6 @@ export default async function AuthorProfilePage({
                 * ประมาณการจาก RPM ฿30/1,000 วิว · {writer.postCount} บทความ
               </p>
             </div>
-          </section>
-        )}
-
-        {/* Tipping */}
-        {author && (author.promptPayId || author.buyMeCoffeeUrl) && (
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-8">
-            <TipSection author={author} />
           </section>
         )}
 
