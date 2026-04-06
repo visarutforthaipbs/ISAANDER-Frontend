@@ -13,6 +13,7 @@ import { ReadingProgress } from "@/components/reading-progress";
 import { TipSection } from "@/components/tip-section";
 import { BackToTop } from "@/components/back-to-top";
 import { TableOfContents } from "@/components/table-of-contents";
+import { AdSenseSlot } from "@/components/adsense-slot";
 
 // --- Data Fetching ---
 
@@ -111,6 +112,9 @@ export default async function PostPage({
       ? await getRelatedPosts(post.categoryIds, post._id ?? "")
       : [];
 
+  const inArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT;
+  const belowArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_BELOW_ARTICLE_SLOT;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -177,7 +181,7 @@ export default async function PostPage({
             <img
               src={coverUrl}
               alt={post.title ?? ""}
-              className="w-full aspect-[16/9] object-cover"
+              className="w-full aspect-video object-cover"
             />
             <div
               className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-background to-transparent"
@@ -238,6 +242,13 @@ export default async function PostPage({
             </p>
           )}
 
+          {inArticleAdSlot && (
+            <AdSenseSlot
+              slot={inArticleAdSlot}
+              className="my-8 rounded-lg border border-black/10 bg-surface p-3"
+            />
+          )}
+
           {/* Table of Contents */}
           <TableOfContents
             headings={extractHeadings(post.richContent as Parameters<typeof extractHeadings>[0])}
@@ -272,6 +283,15 @@ export default async function PostPage({
         <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
           <TipSection author={author} />
         </div>
+
+        {belowArticleAdSlot && (
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
+            <AdSenseSlot
+              slot={belowArticleAdSlot}
+              className="rounded-lg border border-black/10 bg-surface p-3"
+            />
+          </div>
+        )}
 
         {/* Related Posts */}
         {related.length > 0 && (
