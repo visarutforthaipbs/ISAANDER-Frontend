@@ -29,10 +29,11 @@ const memberAvatarCache = new Map<string, { name: string; avatar: string }>();
 /**
  * Async version of resolveAuthor that fetches the Wix member's
  * profile photo and name when no local author match is available.
+ * Returns a full Author shape so it can be used as a drop-in replacement.
  */
 export async function resolveAuthorAsync(
   post: PostLike
-): Promise<{ name: string; avatar: string }> {
+): Promise<Author> {
   const memberId = post.memberId;
 
   if (!memberId) return getDefaultAuthor();
@@ -40,15 +41,17 @@ export async function resolveAuthorAsync(
   // Check local author match first
   const localMatch = getAuthorByWixMemberId(memberId);
 
-  // If local match has an http avatar, return directly
-  if (localMatch && localMatch.avatar.startsWith("http")) return localMatch;
+  // If local match has a populated avatar, return directly
+  if (localMatch && localMatch.avatar && localMatch.avatar.startsWith("http")) return localMatch;
 
   // Check cache
   if (memberAvatarCache.has(memberId)) {
     const cached = memberAvatarCache.get(memberId)!;
+    const base = localMatch || getDefaultAuthor();
     return {
-      name: cached.name,
-      avatar: cached.avatar || localMatch?.avatar || "",
+      ...base,
+      name: cached.name || base.name,
+      avatar: cached.avatar || base.avatar,
     };
   }
 
@@ -61,10 +64,18 @@ export async function resolveAuthorAsync(
     const name = localMatch?.name
       || (firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname || "นักเขียน");
     const photo = member?.profile?.photo?.url ?? "";
+    const slug = localMatch?.slug || member?.profile?.slug || memberId;
 
     const resolved = { name, avatar: photo };
     memberAvatarCache.set(memberId, resolved);
-    return { name, avatar: photo || localMatch?.avatar || "" };
+
+    const base = localMatch || getDefaultAuthor();
+    return {
+      ...base,
+      slug,
+      name,
+      avatar: photo || localMatch?.avatar || base.avatar,
+    };
   } catch {
     const fallback = localMatch || getDefaultAuthor();
     memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
@@ -86,6 +97,10 @@ export interface WixWriter {
   promptPayId?: string;
   promptPayName?: string;
   revenueSharePercent?: number;
+  /** Category labels derived from the writer's posts */
+  categories: string[];
+  /** Sum of views across all posts by this writer */
+  totalViews: number;
   /** Merged local Author config, if any */
   localAuthor?: Author;
 }
@@ -98,7 +113,7 @@ export interface WixWriter {
  */
 export async function fetchWixWriters(): Promise<WixWriter[]> {
   // Fetch all posts (paginated — get up to 200)
-  const allPosts: { memberId?: string | null }[] = [];
+  const allPosts: { _id?: string; memberId?: string | null; categoryIds?: string[] }[] = [];
   let offset = 0;
   const limit = 100;
   for (let i = 0; i < 3; i++) {
@@ -115,13 +130,61 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
     }
   }
 
-  // Count posts per memberId
+  // Build category ID → label map
+  const categoryMap = new Map<string, string>();
+  try {
+    const { categories: cats } = await wixClient.categories.listCategories();
+    if (cats) {
+      for (const cat of cats) {
+        if (cat._id && cat.label) categoryMap.set(cat._id, cat.label);
+      }
+    }
+  } catch {
+    // continue without category labels
+  }
+
+  // Count posts per memberId, collect category IDs & post IDs per member
   const memberPostCount = new Map<string, number>();
+  const memberCategoryIds = new Map<string, Set<string>>();
+  const memberPostIds = new Map<string, string[]>();
   for (const post of allPosts) {
     const mid = post.memberId;
     if (mid) {
       memberPostCount.set(mid, (memberPostCount.get(mid) ?? 0) + 1);
+      if (post._id) {
+        const ids = memberPostIds.get(mid) ?? [];
+        ids.push(post._id);
+        memberPostIds.set(mid, ids);
+      }
+      if (post.categoryIds) {
+        const existing = memberCategoryIds.get(mid) ?? new Set<string>();
+        for (const cid of post.categoryIds) existing.add(cid);
+        memberCategoryIds.set(mid, existing);
+      }
     }
+  }
+
+  // Fetch view counts for all posts and sum per member
+  const memberViewCount = new Map<string, number>();
+  const allPostIds = allPosts.map((p) => p._id).filter((id): id is string => !!id);
+  const viewResults = await Promise.all(
+    allPostIds.map(async (postId) => {
+      try {
+        const result = await wixClient.posts.getPostMetrics(postId);
+        return { postId, views: result?.metrics?.views ?? 0 };
+      } catch {
+        return { postId, views: 0 };
+      }
+    })
+  );
+  // Map postId → memberId for aggregation
+  const postToMember = new Map<string, string>();
+  for (const post of allPosts) {
+    if (post._id && post.memberId) postToMember.set(post._id, post.memberId);
+  }
+  for (const { postId, views } of viewResults) {
+    const mid = postToMember.get(postId);
+    if (mid) memberViewCount.set(mid, (memberViewCount.get(mid) ?? 0) + views);
   }
 
   // Fetch member profiles
@@ -161,6 +224,12 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
       const title = merged?.title ?? member?.profile?.title ?? "นักเขียน";
       const bio = merged?.bio ?? "";
 
+      // Resolve category labels for this writer
+      const catIds = memberCategoryIds.get(memberId);
+      const categories = catIds
+        ? [...catIds].map((id) => categoryMap.get(id)).filter((l): l is string => !!l)
+        : [];
+
       writers.push({
         slug,
         name: displayName,
@@ -174,9 +243,16 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         promptPayId: merged?.promptPayId,
         promptPayName: merged?.promptPayName,
         revenueSharePercent: merged?.revenueSharePercent ?? 60,
+        categories,
+        totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: merged,
       });
     } catch {
+      const catIds = memberCategoryIds.get(memberId);
+      const categories = catIds
+        ? [...catIds].map((id) => categoryMap.get(id)).filter((l): l is string => !!l)
+        : [];
+
       // Member lookup failed — use local config or minimal fallback
       writers.push({
         slug: local?.slug ?? memberId.slice(0, 8),
@@ -191,13 +267,15 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         promptPayId: local?.promptPayId,
         promptPayName: local?.promptPayName,
         revenueSharePercent: local?.revenueSharePercent ?? 60,
+        categories,
+        totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: local,
       });
     }
   }
 
-  // Sort by post count descending
-  writers.sort((a, b) => b.postCount - a.postCount);
+  // Sort by total views descending (fall back to post count)
+  writers.sort((a, b) => b.totalViews - a.totalViews || b.postCount - a.postCount);
 
   return writers;
 }

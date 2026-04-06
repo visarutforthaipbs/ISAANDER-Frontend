@@ -1,4 +1,5 @@
 import { media } from "@wix/sdk";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -46,6 +47,53 @@ interface Decoration {
 }
 
 // ---- Helpers ----
+
+/** Extract plain text from a node tree (for heading text, slug generation) */
+function getPlainText(node: RichContentNode): string {
+  if (node.type === "TEXT") return node.textData?.text ?? "";
+  return (node.nodes ?? []).map(getPlainText).join("");
+}
+
+/** Generate a URL-safe slug from text */
+function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Heading info for TOC */
+export interface TocHeading {
+  id: string;
+  text: string;
+  level: number; // rendered level (after shift): 2, 3, etc.
+}
+
+/** Walk RichContent nodes and extract headings for table of contents */
+export function extractHeadings(
+  content: { nodes?: RichContentNode[] } | null | undefined
+): TocHeading[] {
+  if (!content?.nodes) return [];
+  const headings: TocHeading[] = [];
+  const slugCount = new Map<string, number>();
+
+  for (const node of content.nodes) {
+    if (node.type !== "HEADING") continue;
+    const rawLevel = node.headingData?.level ?? 2;
+    const level = Math.min(rawLevel + 1, 6); // same shift as renderer
+    const text = getPlainText(node).trim();
+    if (!text) continue;
+
+    let slug = slugify(text) || `heading-${headings.length}`;
+    const count = slugCount.get(slug) ?? 0;
+    slugCount.set(slug, count + 1);
+    if (count > 0) slug = `${slug}-${count}`;
+
+    headings.push({ id: slug, text, level });
+  }
+  return headings;
+}
 
 function getWixImageUrl(src: { url?: string } | null | undefined, w: number, h: number): string | null {
   if (!src?.url) return null;
@@ -119,7 +167,7 @@ function RichContentNode({ node }: { node: RichContentNode }) {
   switch (node.type) {
     case "PARAGRAPH":
       return (
-        <p className="font-sarabun text-base leading-[1.8] text-text-main mb-4">
+        <p className="font-sarabun text-base leading-[1.9] text-text-main mb-5">
           {children}
         </p>
       );
@@ -137,12 +185,14 @@ function RichContentNode({ node }: { node: RichContentNode }) {
       // Prevent h1 inside article body — page already has its own h1.
       // Shift all heading levels down by 1 (h1→h2, h2→h3, …, capped at h6).
       const level = Math.min(rawLevel + 1, 6);
+      const text = getPlainText(node).trim();
+      const headingId = text ? slugify(text) : undefined;
       const className = `font-prompt font-bold text-text-main ${sizes[rawLevel] ?? sizes[2]} mt-8 mb-4`;
-      if (level === 2) return <h2 className={className}>{children}</h2>;
-      if (level === 3) return <h3 className={className}>{children}</h3>;
-      if (level === 4) return <h4 className={className}>{children}</h4>;
-      if (level === 5) return <h5 className={className}>{children}</h5>;
-      return <h6 className={className}>{children}</h6>;
+      if (level === 2) return <h2 id={headingId} className={className}>{children}</h2>;
+      if (level === 3) return <h3 id={headingId} className={className}>{children}</h3>;
+      if (level === 4) return <h4 id={headingId} className={className}>{children}</h4>;
+      if (level === 5) return <h5 id={headingId} className={className}>{children}</h5>;
+      return <h6 id={headingId} className={className}>{children}</h6>;
     }
 
     case "TEXT":
@@ -153,27 +203,32 @@ function RichContentNode({ node }: { node: RichContentNode }) {
     case "IMAGE": {
       const imgUrl = getWixImageUrl(node.imageData?.image?.src, 800, 600);
       if (!imgUrl) return null;
+      const highResUrl = getWixImageUrl(node.imageData?.image?.src, 1600, 1200) || imgUrl;
       return (
-        <figure className="my-6">
-          <img
-            src={imgUrl}
-            alt={node.imageData?.altText ?? ""}
-            className="w-full rounded-lg"
-            loading="lazy"
-          />
-          {node.imageData?.caption && (
-            <figcaption className="text-sm text-text-muted text-center mt-2 font-sarabun">
-              {node.imageData.caption}
-            </figcaption>
-          )}
-        </figure>
+        <ImageLightbox src={highResUrl} alt={node.imageData?.altText ?? ""}>
+          <figure className="my-6">
+            <img
+              src={imgUrl}
+              alt={node.imageData?.altText ?? ""}
+              className="w-full rounded-lg"
+              loading="lazy"
+            />
+            {node.imageData?.caption && (
+              <figcaption className="text-sm text-text-muted text-center mt-2 font-sarabun">
+                {node.imageData.caption}
+              </figcaption>
+            )}
+          </figure>
+        </ImageLightbox>
       );
     }
 
     case "BLOCKQUOTE":
       return (
-        <blockquote className="border-l-4 border-primary/40 pl-4 my-6 italic text-text-muted">
-          {children}
+        <blockquote className="border-l-4 border-primary/30 pl-5 pr-2 my-8 py-2">
+          <div className="font-sarabun text-lg leading-relaxed text-text-muted italic">
+            {children}
+          </div>
         </blockquote>
       );
 
@@ -196,13 +251,34 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "CODE_BLOCK":
       return (
-        <pre className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-6 text-sm font-mono">
-          <code>{children}</code>
-        </pre>
+        <aside
+          className="my-8 rounded-lg border border-accent/30 bg-accent/5 p-5"
+          aria-label="ข้อมูลการสนับสนุน"
+        >
+          <div className="flex items-start gap-3">
+            <svg
+              className="w-5 h-5 text-accent mt-0.5 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div className="font-sarabun text-sm leading-relaxed text-text-main/80">
+              {children}
+            </div>
+          </div>
+        </aside>
       );
 
     case "DIVIDER":
-      return <hr className="my-8 border-black/10" />;
+      return <hr className="my-10 border-black/10" />;
 
     case "VIDEO": {
       const videoSrc = node.videoData?.video?.src?.url;

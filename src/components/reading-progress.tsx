@@ -24,7 +24,7 @@ export function ReadingProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label="ความคืบหน้าการอ่าน"
-      className="fixed top-14 left-0 z-40 h-0.5 bg-primary transition-[width] duration-150 ease-out"
+      className="fixed top-14 left-0 z-40 h-[3px] bg-primary transition-[width] duration-150 ease-out"
       style={{ width: `${progress}%` }}
     />
   );

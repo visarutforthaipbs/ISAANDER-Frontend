@@ -378,7 +378,10 @@ export default async function HomePage() {
                     นักเขียนเด่น
                   </h2>
                   <div className="flex flex-col gap-3">
-                    {writers.slice(0, 5).map((writer) => (
+                    {writers
+                      .filter((w) => w.slug !== "theisaander" && w.title !== "กองบรรณาธิการ" && w.name !== "กองบรรณาธิการ")
+                      .slice(0, 5)
+                      .map((writer) => (
                       <Link
                         key={writer.slug}
                         href={`/author/${writer.slug}`}
@@ -402,7 +405,7 @@ export default async function HomePage() {
                             {writer.name}
                           </p>
                           <p className="font-sarabun text-xs text-text-muted">
-                            {writer.postCount} บทความ
+                            {writer.postCount} บทความ · {writer.totalViews.toLocaleString()} views
                           </p>
                         </div>
                       </Link>

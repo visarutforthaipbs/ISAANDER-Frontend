@@ -5,12 +5,14 @@ import { Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import wixClient from "@/lib/wix-client";
 import { formatDate } from "@/lib/utils";
-import { resolveAuthor } from "@/lib/author-utils";
-import { RichContentRenderer } from "@/components/rich-content";
+import { resolveAuthorAsync } from "@/lib/author-utils";
+import { RichContentRenderer, extractHeadings } from "@/components/rich-content";
 import { MobileBottomNav } from "@/components/navigation";
 import { ShareButton } from "@/components/share-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { TipSection } from "@/components/tip-section";
+import { BackToTop } from "@/components/back-to-top";
+import { TableOfContents } from "@/components/table-of-contents";
 
 // --- Data Fetching ---
 
@@ -102,7 +104,7 @@ export default async function PostPage({
       })()
     : null;
 
-  const author = resolveAuthor(post);
+  const author = await resolveAuthorAsync(post);
 
   const related =
     post.categoryIds && post.categoryIds.length > 0
@@ -144,6 +146,7 @@ export default async function PostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <ReadingProgress />
+      <BackToTop />
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
@@ -168,13 +171,19 @@ export default async function PostPage({
       </header>
 
       <main id="main-content" className="flex-1 pb-28">
-        {/* Cover Image — full-bleed */}
+        {/* Cover Image — full-bleed with gradient transition */}
         {coverUrl && (
-          <img
-            src={coverUrl}
-            alt={post.title ?? ""}
-            className="w-full aspect-[16/9] object-cover"
-          />
+          <div className="relative">
+            <img
+              src={coverUrl}
+              alt={post.title ?? ""}
+              className="w-full aspect-[16/9] object-cover"
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-background to-transparent"
+              aria-hidden="true"
+            />
+          </div>
         )}
 
         <article className="max-w-3xl mx-auto px-4 sm:px-6">
@@ -229,6 +238,11 @@ export default async function PostPage({
             </p>
           )}
 
+          {/* Table of Contents */}
+          <TableOfContents
+            headings={extractHeadings(post.richContent as Parameters<typeof extractHeadings>[0])}
+          />
+
           {/* Rich Content */}
           <div className="prose-wrapper">
             <RichContentRenderer
@@ -262,7 +276,8 @@ export default async function PostPage({
         {/* Related Posts */}
         {related.length > 0 && (
           <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-12">
-            <h2 className="font-prompt text-lg font-semibold text-text-main mb-4">
+            <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
+              <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
               บทความที่เกี่ยวข้อง
             </h2>
             <div className="flex flex-col gap-4">
@@ -300,12 +315,17 @@ export default async function PostPage({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
+                      {rp.categoryIds?.[0] && categoryMap.get(rp.categoryIds[0]) && (
+                        <span className="inline-block bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2.5 py-0.5 rounded-full mb-1">
+                          {categoryMap.get(rp.categoryIds[0])}
+                        </span>
+                      )}
                       <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
                         {rp.title}
                       </h3>
                       <time
                         dateTime={rp.lastPublishedDate ? new Date(rp.lastPublishedDate).toISOString() : undefined}
-                        className="font-sarabun text-xs text-text-muted"
+                        className="font-sarabun text-xs text-text-muted mt-1 block"
                       >
                         {formatDate(rp.lastPublishedDate)}
                       </time>

@@ -76,6 +76,19 @@ export default async function AuthorsPage() {
                           ))}
                         </div>
                       )}
+                      {/* Category badges from posts */}
+                      {writer.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {writer.categories.slice(0, 4).map((cat) => (
+                            <span
+                              key={cat}
+                              className="bg-primary/10 text-primary text-xs font-sarabun px-2 py-0.5 rounded-full"
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {writer.bio && (

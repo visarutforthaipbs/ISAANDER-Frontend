@@ -55,6 +55,49 @@ body {
   border-radius: 2px;
 }
 
+/* ---- Rich content article body ---- */
+.rich-content > p + p {
+  margin-top: 0;
+}
+
+.rich-content a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.rich-content {
+  overflow-wrap: break-word;
+}
+
+.rich-content figure + h2,
+.rich-content figure + h3 {
+  margin-top: 2rem;
+}
+
+.rich-content blockquote p {
+  margin-bottom: 0;
+}
+
+/* ---- Drop cap on first paragraph ---- */
+.rich-content > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-dbhelvethaica), serif;
+  font-size: 3.5em;
+  line-height: 0.8;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-right: 0.08em;
+  margin-top: 0.05em;
+}
+
+/* ---- Brand text selection ---- */
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-text-main);
+}
+
 /* Hide scrollbar for carousel */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -62,4 +105,17 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ---- Bottom sheet slide-up animation ---- */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
 }
