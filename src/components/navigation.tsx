@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Home, Compass, Bookmark, ArrowLeft, Users, LogIn } from "lucide-react";
+import { Search, Home, Compass, Bookmark, ArrowLeft, Users, LogIn, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
+  const { user, signInWithGoogle } = useAuth();
+  
   return (
     <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
@@ -30,13 +33,35 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
           >
             <Search className="w-5 h-5" />
           </Link>
-          <Link
-            href="/author/dashboard"
-            className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
-            aria-label="เข้าสู่ระบบ"
-          >
-            <LogIn className="w-5 h-5" />
-          </Link>
+          
+          {user ? (
+            <Link
+              href="/profile"
+              className="p-1 rounded-full border border-black/10 hover:border-primary/50 transition-colors"
+              aria-label="โปรไฟล์"
+            >
+              {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={user.photoURL} 
+                  alt={user.displayName || "Profile"} 
+                  className="w-7 h-7 rounded-full object-cover" 
+                />
+              ) : (
+                <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-white">
+                  <UserIcon className="w-4 h-4" />
+                </div>
+              )}
+            </Link>
+          ) : (
+            <button
+              onClick={signInWithGoogle}
+              className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
+              aria-label="เข้าสู่ระบบ"
+            >
+              <LogIn className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
     </header>

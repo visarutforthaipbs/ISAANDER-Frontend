@@ -9,6 +9,7 @@ import { resolveAuthorAsync } from "@/lib/author-utils";
 import { RichContentRenderer, extractHeadings } from "@/components/rich-content";
 import { MobileBottomNav } from "@/components/navigation";
 import { ShareButton } from "@/components/share-button";
+import { SaveButton } from "@/components/save-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { TipSection } from "@/components/tip-section";
 import { BackToTop } from "@/components/back-to-top";
@@ -170,7 +171,20 @@ export default async function PostPage({
               The Isaander
             </Link>
           </div>
-          <ShareButton title={post.title ?? ""} />
+          <div className="flex items-center gap-1">
+            <SaveButton 
+              post={{
+                _id: post._id ?? "",
+                slug: post.slug ?? "",
+                title: post.title ?? "",
+                excerpt: post.excerpt ?? "",
+                coverUrl: coverUrl,
+                categoryLabel: categoryLabel,
+                publishedDate: post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : null,
+              }} 
+            />
+            <ShareButton title={post.title ?? ""} />
+          </div>
         </div>
       </header>
 
