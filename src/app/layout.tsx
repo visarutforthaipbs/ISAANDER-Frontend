@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
+import { PageLoading } from "@/components/page-loading";
 
 const dbHelvethaica = localFont({
   src: [
@@ -104,6 +105,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           ข้ามไปยังเนื้อหาหลัก
         </a>
+        <PageLoading />
         <AuthProvider>
           {children}
         </AuthProvider>

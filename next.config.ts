@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "static.wixstatic.com" },
       { protocol: "https", hostname: "*.wixstatic.com" },
     ],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
+  compress: true,
 };
 
 export default nextConfig;

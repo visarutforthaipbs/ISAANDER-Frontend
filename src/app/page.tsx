@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import wixClient from "@/lib/wix-client";
 import { getPostImageUrl, getCategoryLabel, formatDate } from "@/lib/utils";
 import { resolveAuthorAsync, fetchWixWriters } from "@/lib/author-utils";
@@ -66,13 +67,16 @@ function HeroDeepDive({
         className="block relative overflow-hidden rounded-xl group"
       >
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={post.title ?? ""}
-            className="aspect-[4/5] sm:aspect-[16/10] w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="eager"
-            fetchPriority="high"
-          />
+          <div className="relative aspect-[4/5] sm:aspect-[16/10] w-full overflow-hidden">
+            <Image
+              src={imageUrl}
+              alt={post.title ?? ""}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 700px"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              priority
+            />
+          </div>
         ) : (
           <div className="bg-stone-200 aspect-[4/5] sm:aspect-[16/10] w-full" />
         )}
@@ -153,11 +157,15 @@ function HistoryCarousel({
               {/* Thumbnail */}
               <div className="w-[30%] shrink-0">
                 {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={post.title ?? ""}
-                    className="rounded-md aspect-square w-full object-cover"
-                  />
+                  <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                    <Image
+                      src={imageUrl}
+                      alt={post.title ?? ""}
+                      fill
+                      sizes="(max-width: 768px) 30vw, 120px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="bg-stone-200 rounded-md aspect-square w-full" />
                 )}
@@ -238,11 +246,15 @@ function StandardFeed({
               {/* Thumbnail */}
               <div className="w-[30%] shrink-0">
                 {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={post.title ?? ""}
-                    className="rounded-md aspect-square w-full object-cover"
-                  />
+                  <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                    <Image
+                      src={imageUrl}
+                      alt={post.title ?? ""}
+                      fill
+                      sizes="(max-width: 768px) 30vw, 120px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="bg-stone-200 rounded-md aspect-square w-full" />
                 )}
@@ -299,7 +311,6 @@ function StandardFeed({
 // --- Page ---
 
 export const revalidate = 300;
-export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let heroPost: Awaited<ReturnType<typeof getHeroPost>> = null;

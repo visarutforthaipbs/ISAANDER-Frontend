@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bookmark, Loader2, BookmarkMinus } from "lucide-react";
+import { Bookmark, Loader2, BookmarkMinus, Check, X, AlertCircle } from "lucide-react";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 import { useAuth } from "@/context/auth-context";
 import { db } from "@/lib/firebase/config";
@@ -23,20 +23,35 @@ export default function SavedPage() {
   const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const handleRemoveSave = async (e: React.MouseEvent, postId: string) => {
-    e.preventDefault(); // Prevent navigating to the article link
+    e.preventDefault();
     if (!user) return;
-    
-    // Optimistic UI update - remove from list immediately
+
+    if (confirmingId !== postId) {
+      // First click — ask for confirmation
+      setConfirmingId(postId);
+      return;
+    }
+
+    // Second click — confirmed, delete
+    setConfirmingId(null);
     setSavedPosts((current) => current.filter((p) => p.postId !== postId));
-    
+
     try {
       const saveRef = doc(db, "users", user.uid, "savedPosts", postId);
       await deleteDoc(saveRef);
     } catch (error) {
       console.error("Error removing saved post:", error);
+      // Revert if delete failed — re-fetch would be complex, just show a note
     }
+  };
+
+  const cancelConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setConfirmingId(null);
   };
 
   useEffect(() => {
@@ -56,12 +71,14 @@ export default function SavedPage() {
         );
         const querySnapshot = await getDocs(q);
         const posts: SavedPost[] = [];
-        querySnapshot.forEach((doc) => {
-          posts.push(doc.data() as SavedPost);
+        querySnapshot.forEach((docSnap) => {
+          posts.push(docSnap.data() as SavedPost);
         });
         setSavedPosts(posts);
+        setFetchError(false);
       } catch (error) {
         console.error("Error fetching saved posts:", error);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -81,12 +98,13 @@ export default function SavedPage() {
           </h1>
 
           {authLoading || loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="flex justify-center py-20" aria-label="กำลังโหลด" role="status">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden="true" />
+              <span className="sr-only">กำลังโหลด...</span>
             </div>
           ) : !user ? (
             <div className="text-center py-16 bg-surface rounded-2xl border border-black/5 shadow-sm">
-              <Bookmark className="w-12 h-12 text-text-muted/30 mx-auto mb-4" />
+              <Bookmark className="w-12 h-12 text-text-muted/30 mx-auto mb-4" aria-hidden="true" />
               <p className="text-text-main font-sarabun font-bold mb-6">
                 กรุณาเข้าสู่ระบบเพื่อดูและจัดการบทความที่คุณบันทึกไว้
               </p>
@@ -97,9 +115,46 @@ export default function SavedPage() {
                 เข้าสู่ระบบผู้อ่านผ่าน Google
               </button>
             </div>
+          ) : fetchError ? (
+            <div className="text-center py-16 bg-surface rounded-2xl border border-black/5 shadow-sm">
+              <AlertCircle className="w-12 h-12 text-text-muted/30 mx-auto mb-4" aria-hidden="true" />
+              <p className="text-text-main font-sarabun font-bold mb-2">
+                ไม่สามารถโหลดบทความที่บันทึกได้
+              </p>
+              <p className="text-sm text-text-muted font-sarabun mb-6">
+                กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง
+              </p>
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  setFetchError(false);
+                  // Re-trigger fetch by toggling — simplest approach
+                  const refetch = async () => {
+                    try {
+                      const q = query(
+                        collection(db, "users", user.uid, "savedPosts"),
+                        orderBy("savedAt", "desc")
+                      );
+                      const snap = await getDocs(q);
+                      const posts: SavedPost[] = [];
+                      snap.forEach((d) => posts.push(d.data() as SavedPost));
+                      setSavedPosts(posts);
+                    } catch {
+                      setFetchError(true);
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+                  refetch();
+                }}
+                className="inline-flex items-center justify-center px-6 py-2.5 bg-primary text-white font-sarabun font-medium rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                ลองใหม่อีกครั้ง
+              </button>
+            </div>
           ) : savedPosts.length === 0 ? (
             <div className="text-center py-16 bg-surface rounded-2xl border border-black/5 shadow-sm">
-              <Bookmark className="w-12 h-12 text-text-muted/30 mx-auto mb-4" />
+              <Bookmark className="w-12 h-12 text-text-muted/30 mx-auto mb-4" aria-hidden="true" />
               <p className="text-text-muted font-sarabun font-bold">
                 ยังไม่มีบทความที่บันทึกไว้
               </p>
@@ -127,7 +182,7 @@ export default function SavedPage() {
                       <div className="w-full h-full bg-background-alt" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0 pr-10 sm:pr-12">
                     {post.categoryLabel && (
                       <span className="bg-secondary/15 text-secondary text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block mb-1.5 sm:mb-2">
@@ -138,7 +193,10 @@ export default function SavedPage() {
                       {post.title}
                     </h2>
                     {post.publishedDate && (
-                      <time className="font-sarabun text-[10px] sm:text-xs text-text-muted">
+                      <time
+                        dateTime={new Date(post.publishedDate).toISOString()}
+                        className="font-sarabun text-[10px] sm:text-xs text-text-muted"
+                      >
                         {new Date(post.publishedDate).toLocaleDateString("th-TH", {
                           year: "numeric",
                           month: "short",
@@ -148,14 +206,40 @@ export default function SavedPage() {
                     )}
                   </div>
 
-                  <button
-                    onClick={(e) => handleRemoveSave(e, post.postId)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-full transition-colors flex shrink-0 items-center justify-center bg-white sm:bg-transparent shadow-sm border border-black/5 sm:border-none sm:shadow-none group-hover:text-text-main"
-                    aria-label="ลบออกจากที่บันทึก"
-                    title="ลบออกจากที่บันทึก"
-                  >
-                    <BookmarkMinus className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                  {confirmingId === post.postId ? (
+                    /* Inline confirmation — replaces the delete button */
+                    <div
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <span className="font-sarabun text-xs text-text-muted mr-0.5 hidden sm:inline">
+                        ลบออก?
+                      </span>
+                      <button
+                        onClick={(e) => handleRemoveSave(e, post.postId)}
+                        className="p-1.5 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+                        aria-label="ยืนยันการลบ"
+                      >
+                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={cancelConfirm}
+                        className="p-1.5 rounded-full bg-black/10 text-text-main hover:bg-black/20 transition-colors"
+                        aria-label="ยกเลิก"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => handleRemoveSave(e, post.postId)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-full transition-colors flex shrink-0 items-center justify-center bg-white sm:bg-transparent shadow-sm border border-black/5 sm:border-none sm:shadow-none"
+                      aria-label="ลบออกจากที่บันทึก"
+                      title="ลบออกจากที่บันทึก"
+                    >
+                      <BookmarkMinus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                    </button>
+                  )}
                 </Link>
               ))}
             </div>

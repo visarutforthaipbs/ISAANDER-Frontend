@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { media } from "@wix/sdk";
 import { Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -71,7 +72,6 @@ export async function generateMetadata({
 // --- Page ---
 
 export const revalidate = 300;
-export const dynamic = "force-dynamic";
 
 export default async function PostPage({
   params,
@@ -192,11 +192,16 @@ export default async function PostPage({
         {/* Cover Image — full-bleed with gradient transition */}
         {coverUrl && (
           <div className="relative">
-            <img
-              src={coverUrl}
-              alt={post.title ?? ""}
-              className="w-full aspect-video object-cover"
-            />
+            <div className="relative w-full aspect-video">
+              <Image
+                src={coverUrl}
+                alt={post.title ?? ""}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                priority
+              />
+            </div>
             <div
               className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-background to-transparent"
               aria-hidden="true"
@@ -339,11 +344,15 @@ export default async function PostPage({
                   >
                     <div className="w-[25%] shrink-0">
                       {rpImg ? (
-                        <img
-                          src={rpImg}
-                          alt={rp.title ?? ""}
-                          className="rounded-md aspect-square w-full object-cover"
-                        />
+                        <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                          <Image
+                            src={rpImg}
+                            alt={rp.title ?? ""}
+                            fill
+                            sizes="(max-width: 768px) 25vw, 100px"
+                            className="object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-slate-200 rounded-md aspect-square w-full" />
                       )}

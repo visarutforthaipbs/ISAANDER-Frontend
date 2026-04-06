@@ -7,7 +7,6 @@ import { resolveAuthor } from "@/lib/author-utils";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 
 export const revalidate = 300;
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "สำรวจ — The Isaander",

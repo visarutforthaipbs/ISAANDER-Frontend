@@ -19,7 +19,4 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Optional: you can force adding a new account instead of automatically signing in with the current one
-// googleProvider.setCustomParameters({ prompt: "select_account" });
-
 export { app, auth, db, googleProvider };
