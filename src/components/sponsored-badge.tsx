@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+
 interface SponsoredBadgeProps {
   className?: string;
 }
@@ -5,21 +7,9 @@ interface SponsoredBadgeProps {
 export function SponsoredBadge({ className = "" }: SponsoredBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 bg-accent/15 text-accent text-xs font-sarabun font-semibold px-3 py-1 rounded-full ${className}`}
+      className={`inline-flex items-center gap-1 bg-accent text-text-main text-xs font-sarabun font-semibold px-3 py-1 rounded-full ${className}`}
     >
-      <svg
-        className="w-3.5 h-3.5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
+      <Info className="w-3.5 h-3.5" aria-hidden="true" />
       เนื้อหาสนับสนุน
     </span>
   );

@@ -97,7 +97,7 @@ export default async function SearchPage({
                 defaultValue={q}
                 placeholder="ค้นหาบทความ..."
                 autoFocus
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface border border-black/10 font-sarabun text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-black/10 font-sarabun text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
           </form>

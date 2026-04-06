@@ -224,7 +224,7 @@ export default async function PostPage({
               </time>
               {post.minutesToRead != null && post.minutesToRead > 0 && (
                 <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4" aria-hidden="true" />
                   {post.minutesToRead} นาทีอ่าน
                 </span>
               )}

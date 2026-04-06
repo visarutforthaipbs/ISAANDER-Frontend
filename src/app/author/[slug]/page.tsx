@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { DollarSign } from "lucide-react";
+import { DollarSign, ArrowLeft } from "lucide-react";
 import { getAuthorBySlug } from "@/data/authors";
 import { fetchWixWriters, type WixWriter } from "@/lib/author-utils";
 import wixClient from "@/lib/wix-client";
@@ -142,6 +142,8 @@ async function findWriter(slug: string): Promise<{ writer: WixWriter; posts: Awa
           promptPayId: localAuthor.promptPayId,
           promptPayName: localAuthor.promptPayName,
           revenueSharePercent: sharePercent,
+          categories: [],
+          totalViews,
           localAuthor,
         },
         posts,
@@ -211,19 +213,7 @@ export default async function AuthorProfilePage({
               className="p-2 -ml-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
               aria-label="กลับหน้าแรก"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                />
-              </svg>
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <Link
               href="/"

@@ -91,7 +91,7 @@ export default async function ExplorePage() {
           >
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
               <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-                <span className="w-1 h-6 bg-primary rounded-full" />
+                <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
                 {category.label}
               </h2>
             </div>

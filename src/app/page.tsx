@@ -374,7 +374,7 @@ export default async function HomePage() {
               {writers.length > 0 && (
                 <section aria-label="นักเขียนเด่น">
                   <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-secondary rounded-full" aria-hidden="true" />
+                    <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
                     นักเขียนเด่น
                   </h2>
                   <div className="flex flex-col gap-3">

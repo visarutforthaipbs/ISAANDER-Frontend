@@ -53,9 +53,9 @@ export default async function AuthorsPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h2 className="font-prompt font-semibold text-text-main group-hover:text-primary transition-colors">
+                      <h3 className="font-prompt font-semibold text-text-main group-hover:text-primary transition-colors">
                         {writer.name}
-                      </h2>
+                      </h3>
                       <p className="text-sm text-text-muted font-sarabun">
                         {writer.title}
                       </p>
@@ -82,7 +82,7 @@ export default async function AuthorsPage() {
                           {writer.categories.slice(0, 4).map((cat) => (
                             <span
                               key={cat}
-                              className="bg-primary/10 text-primary text-xs font-sarabun px-2 py-0.5 rounded-full"
+                              className="bg-secondary/15 text-secondary text-xs font-sarabun px-2 py-0.5 rounded-full"
                             >
                               {cat}
                             </span>
