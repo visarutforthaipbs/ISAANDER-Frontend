@@ -6,6 +6,7 @@ import { resolveAuthorAsync, fetchWixWriters } from "@/lib/author-utils";
 type AuthorMap = Map<string, { name: string; avatar: string }>;
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 import { WelcomePopup } from "@/components/welcome-popup";
+import { LoginCta } from "@/components/login-cta";
 
 // --- Data Fetching ---
 
@@ -356,12 +357,7 @@ export default async function HomePage() {
                   >
                     พบนักเขียนของเรา
                   </Link>
-                  <Link
-                    href="/author/dashboard"
-                    className="inline-flex items-center gap-2 bg-surface text-primary border border-primary/30 font-sarabun text-sm font-medium px-4 py-2 rounded-full hover:bg-primary/5 transition-colors"
-                  >
-                    เข้าสู่ระบบนักเขียน
-                  </Link>
+                  <LoginCta />
                 </div>
               </section>
 
