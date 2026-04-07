@@ -59,6 +59,14 @@ export async function PUT(
     );
   }
 
+  // Guard against using Wix dashboard dataCapsuleId in place of memberId
+  if (typeof data.wixMemberId === "string" && /^\d{8,}$/.test(data.wixMemberId.trim())) {
+    return NextResponse.json(
+      { error: "wixMemberId appears invalid (numeric-only). Do not use dataCapsuleId from Wix URL." },
+      { status: 400 }
+    );
+  }
+
   await upsertWriterMetadata(slug, data, session.email);
   return NextResponse.json({ success: true });
 }

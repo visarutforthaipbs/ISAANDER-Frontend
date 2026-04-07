@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Users,
@@ -19,6 +20,7 @@ import {
   Globe,
   CheckCircle2,
   AlertCircle,
+  Search,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -53,6 +55,15 @@ interface UserInfo {
   email: string;
 }
 
+interface WixWriterOption {
+  slug: string;
+  name: string;
+  title: string;
+  avatar: string;
+  wixMemberId: string;
+  postCount: number;
+}
+
 const EMPTY_WRITER: WriterMeta = {
   slug: "",
   wixMemberId: "",
@@ -79,6 +90,9 @@ export default function WritersAdminPage() {
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [wixWriters, setWixWriters] = useState<WixWriterOption[]>([]);
+  const [loadingWix, setLoadingWix] = useState(false);
+  const [wixSearch, setWixSearch] = useState("");
 
   // Auth check
   useEffect(() => {
@@ -125,6 +139,10 @@ export default function WritersAdminPage() {
     if (!editing) return;
     if (!editing.slug.trim()) {
       showToast("error", "กรุณากรอก slug");
+      return;
+    }
+    if (editing.wixMemberId && /^\d{8,}$/.test(editing.wixMemberId.trim())) {
+      showToast("error", "Wix Member ID ไม่ควรเป็นตัวเลขล้วน (อย่าใช้ dataCapsuleId จาก URL)");
       return;
     }
     setSaving(true);
@@ -223,9 +241,25 @@ export default function WritersAdminPage() {
             </p>
           </div>
           <button
-            onClick={() => {
+            onClick={async () => {
               setEditing({ ...EMPTY_WRITER });
               setIsNew(true);
+              setWixSearch("");
+              // Fetch Wix writers for the selector
+              if (wixWriters.length === 0) {
+                setLoadingWix(true);
+                try {
+                  const res = await fetch("/api/admin/writers/wix");
+                  if (res.ok) {
+                    const d = await res.json();
+                    setWixWriters(d.writers ?? []);
+                  }
+                } catch {
+                  // silently fail — user can still type manually
+                } finally {
+                  setLoadingWix(false);
+                }
+              }
             }}
             className="inline-flex items-center gap-2 bg-primary text-white font-prompt font-semibold px-4 py-2.5 rounded-full hover:brightness-110 transition-all shadow-sm text-sm"
           >
@@ -366,6 +400,106 @@ export default function WritersAdminPage() {
               </h2>
 
               <div className="flex flex-col gap-4">
+                {/* Wix Writer Selector — only for new writers */}
+                {isNew && (
+                  <div>
+                    <label className="block font-sarabun text-xs text-text-muted mb-1">
+                      เลือกนักเขียนจาก Wix (เติมข้อมูลอัตโนมัติ)
+                    </label>
+                    {loadingWix ? (
+                      <div className="flex items-center gap-2 py-2 text-text-muted text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        กำลังโหลดรายชื่อจาก Wix...
+                      </div>
+                    ) : wixWriters.length > 0 ? (
+                      <div>
+                        <div className="relative mb-2">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                          <input
+                            type="text"
+                            value={wixSearch}
+                            onChange={(e) => setWixSearch(e.target.value)}
+                            placeholder="ค้นหาชื่อนักเขียน..."
+                            className="input-field pl-8"
+                          />
+                        </div>
+                        <div className="max-h-40 overflow-y-auto border border-black/10 rounded-lg divide-y divide-black/5">
+                          {wixWriters
+                            .filter((w) => {
+                              if (!wixSearch.trim()) return true;
+                              const q = wixSearch.toLowerCase();
+                              return (
+                                w.name.toLowerCase().includes(q) ||
+                                w.slug.toLowerCase().includes(q) ||
+                                w.wixMemberId.toLowerCase().includes(q)
+                              );
+                            })
+                            .map((w) => {
+                              const alreadyExists = writers.some(
+                                (existing) => existing.wixMemberId === w.wixMemberId
+                              );
+                              return (
+                                <button
+                                  key={w.wixMemberId}
+                                  type="button"
+                                  disabled={alreadyExists}
+                                  onClick={() => {
+                                    setEditing((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            slug: w.slug,
+                                            wixMemberId: w.wixMemberId,
+                                          }
+                                        : prev
+                                    );
+                                    setWixSearch("");
+                                    showToast("success", `เติมข้อมูล "${w.name}" แล้ว`);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 flex items-center gap-3 transition-colors ${
+                                    alreadyExists
+                                      ? "opacity-40 cursor-not-allowed"
+                                      : "hover:bg-primary/5 cursor-pointer"
+                                  }`}
+                                >
+                                  {w.avatar ? (
+                                    <Image
+                                      src={w.avatar}
+                                      alt={w.name}
+                                      width={32}
+                                      height={32}
+                                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                                      unoptimized
+                                    />) : (
+                                    <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center shrink-0">
+                                      <Users className="w-4 h-4 text-text-muted" />
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="font-sarabun text-sm text-text-main font-medium truncate">
+                                      {w.name}
+                                      {alreadyExists && (
+                                        <span className="ml-1.5 text-xs text-text-muted">(มีแล้ว)</span>
+                                      )}
+                                    </div>
+                                    <div className="font-sarabun text-xs text-text-muted truncate">
+                                      {w.slug} · {w.postCount} บทความ
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="font-sarabun text-xs text-text-muted">
+                        ไม่พบข้อมูลนักเขียนจาก Wix — กรอกข้อมูลด้านล่างเอง
+                      </p>
+                    )}
+                    <hr className="border-black/5 mt-3" />
+                  </div>
+                )}
+
                 {/* Slug */}
                 <Field label="Slug (ภาษาอังกฤษ)" required>
                   <input
@@ -393,6 +527,9 @@ export default function WritersAdminPage() {
                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                     className="input-field"
                   />
+                  <p className="mt-1 font-sarabun text-xs text-text-muted">
+                    ใช้ค่า memberId ของสมาชิก Wix เท่านั้น (ห้ามใช้ dataCapsuleId จาก URL หน้าแก้ไขโปรไฟล์)
+                  </p>
                 </Field>
 
                 <hr className="border-black/5" />

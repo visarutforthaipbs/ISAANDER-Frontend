@@ -11,8 +11,13 @@ function getAdminApp(): App {
     } else {
       // Use GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY if available,
       // otherwise fall back to Application Default Credentials (works on GCP / Vercel).
-      const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-      const key = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+      const email =
+        process.env.FIREBASE_ADMIN_CLIENT_EMAIL ??
+        process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+      const key = (
+        process.env.FIREBASE_ADMIN_PRIVATE_KEY ??
+        process.env.GOOGLE_PRIVATE_KEY
+      )?.replace(/\\n/g, "\n");
 
       if (email && key) {
         app = initializeApp({
