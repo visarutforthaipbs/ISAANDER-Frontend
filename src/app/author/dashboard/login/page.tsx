@@ -7,15 +7,18 @@ import { LogIn, AlertCircle } from "lucide-react";
 
 export default function DashboardLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    // Read directly from DOM so browser autofill is always captured
+    const formData = new FormData(e.currentTarget);
+    const email = (formData.get("email") as string)?.trim() ?? "";
+    const password = (formData.get("password") as string) ?? "";
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -75,9 +78,8 @@ export default function DashboardLoginPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
                 className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white font-sarabun text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -94,9 +96,8 @@ export default function DashboardLoginPage() {
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
                 className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-white font-sarabun text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
