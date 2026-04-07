@@ -197,9 +197,9 @@ export default async function AuthorProfilePage({
   const { writer, posts: authorPosts, totalViews, estimatedRevenueTHB, authorShareTHB } = result;
   const author = writer.localAuthor;
 
-  const hasSocials = author
-    ? Object.entries(author.socialLinks).some(([, url]) => !!url)
-    : false;
+  const socialLinks = author?.socialLinks ?? writer.socialLinks ?? {};
+  const expertise = author?.expertise ?? writer.expertise ?? [];
+  const hasSocials = Object.values(socialLinks).some(Boolean);
 
   return (
     <>
@@ -263,9 +263,9 @@ export default async function AuthorProfilePage({
                   {writer.title}
                 </p>
                 {/* Expertise badges */}
-                {author?.expertise && author.expertise.length > 0 && (
+                {expertise.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {author.expertise.map((tag) => (
+                    {expertise.map((tag) => (
                       <span
                         key={tag}
                         className="bg-secondary/10 text-secondary text-xs font-sarabun font-medium px-2.5 py-1 rounded-full"
@@ -290,8 +290,8 @@ export default async function AuthorProfilePage({
 
           {/* Social Links + Hire Me + Buy Me a Coffee */}
           <div className="flex flex-wrap items-center gap-3 mt-5">
-            {hasSocials && author &&
-              Object.entries(author.socialLinks).map(([key, url]) => {
+            {hasSocials &&
+              Object.entries(socialLinks).map(([key, url]) => {
                 if (!url) return null;
                 const social = socialIcons[key];
                 if (!social) return null;

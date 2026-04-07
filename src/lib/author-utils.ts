@@ -140,6 +140,15 @@ export interface WixWriter {
   promptPayId?: string;
   promptPayName?: string;
   revenueSharePercent?: number;
+  socialLinks?: {
+    facebook?: string;
+    x?: string;
+    instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+    website?: string;
+  };
+  expertise?: string[];
   /** Category labels derived from the writer's posts */
   categories: string[];
   /** Sum of views across all posts by this writer */
@@ -305,6 +314,8 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         promptPayId: fsMeta?.promptPayId ?? merged?.promptPayId,
         promptPayName: fsMeta?.promptPayName ?? merged?.promptPayName,
         revenueSharePercent: fsMeta?.revenueSharePercent ?? merged?.revenueSharePercent ?? 60,
+        socialLinks: fsMeta?.socialLinks ?? merged?.socialLinks,
+        expertise: fsMeta?.expertise ?? merged?.expertise,
         categories,
         totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: merged,
@@ -332,6 +343,8 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         promptPayId: fsMeta?.promptPayId ?? local?.promptPayId,
         promptPayName: fsMeta?.promptPayName ?? local?.promptPayName,
         revenueSharePercent: fsMeta?.revenueSharePercent ?? local?.revenueSharePercent ?? 60,
+        socialLinks: fsMeta?.socialLinks ?? local?.socialLinks,
+        expertise: fsMeta?.expertise ?? local?.expertise,
         categories,
         totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: local,
