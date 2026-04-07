@@ -42,7 +42,7 @@ const authors: Author[] = [
       x: "https://x.com/theisaander",
     },
     expertise: ["ข่าวสืบสวน", "วัฒนธรรมอีสาน"],
-    email: "admin@theisaander.com",
+    email: "visarutsankham@gmail.com",
     passwordHash:
       "$2b$10$6SwjFwuN4lmOs4Wu9GfKeOlk88et7CJmXVYTmA7qMmC8Ols35GM3C", // isaander2025
     revenueSharePercent: 60,

@@ -5,6 +5,13 @@ import {
   type Author,
 } from "@/data/authors";
 import wixClient from "@/lib/wix-client";
+import { getAdminFirestore } from "@/lib/firebase/admin";
+import {
+  getAllWriterMetadata,
+  getWriterByWixMemberId as getFirestoreWriterByWixMemberId,
+  getWriterMetadata as getFirestoreWriterBySlug,
+  type WriterMetadata,
+} from "@/lib/firebase/writer-metadata";
 
 interface PostLike {
   memberId?: string | null;
@@ -41,8 +48,35 @@ export async function resolveAuthorAsync(
   // Check local author match first
   const localMatch = getAuthorByWixMemberId(memberId);
 
-  // If local match has a populated avatar, return directly
-  if (localMatch && localMatch.avatar && localMatch.avatar.startsWith("http")) return localMatch;
+  // Check Firestore for additional metadata
+  let firestoreMeta: WriterMetadata | null = null;
+  try {
+    if (localMatch) {
+      firestoreMeta = await getFirestoreWriterBySlug(localMatch.slug);
+    }
+    if (!firestoreMeta) {
+      firestoreMeta = await getFirestoreWriterByWixMemberId(memberId);
+    }
+  } catch {
+    // Firestore unavailable — continue with local data
+  }
+
+  // If local match has a populated avatar, return directly (with Firestore overlay)
+  if (localMatch && localMatch.avatar && localMatch.avatar.startsWith("http")) {
+    if (firestoreMeta) {
+      return {
+        ...localMatch,
+        promptPayId: firestoreMeta.promptPayId ?? localMatch.promptPayId,
+        promptPayName: firestoreMeta.promptPayName ?? localMatch.promptPayName,
+        hireEmail: firestoreMeta.hireEmail ?? localMatch.hireEmail,
+        buyMeCoffeeUrl: firestoreMeta.buyMeCoffeeUrl ?? localMatch.buyMeCoffeeUrl,
+        revenueSharePercent: firestoreMeta.revenueSharePercent ?? localMatch.revenueSharePercent,
+        socialLinks: { ...localMatch.socialLinks, ...firestoreMeta.socialLinks },
+        expertise: firestoreMeta.expertise ?? localMatch.expertise,
+      };
+    }
+    return localMatch;
+  }
 
   // Check cache
   if (memberAvatarCache.has(memberId)) {
@@ -59,10 +93,19 @@ export async function resolveAuthorAsync(
     const member = await wixClient.members.getMember(memberId, {
       fieldsets: ["FULL"],
     });
+
+    let firestoreMeta: any = null;
+    try {
+      const db = getAdminFirestore();
+      const snap = await db.collection("authors_metadata").doc(memberId).get();
+      if (snap.exists) firestoreMeta = snap.data();
+    } catch {}
+
     const firstName = member?.contact?.firstName ?? "";
     const lastName = member?.contact?.lastName ?? "";
-    const name = localMatch?.name
-      || (firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname || "นักเขียน");
+    const wixName = firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname;
+    const name = firestoreMeta?.promptPayName || localMatch?.name || wixName || "นักเขียน";
+    
     const photo = member?.profile?.photo?.url ?? "";
     const slug = localMatch?.slug || member?.profile?.slug || memberId;
 
@@ -191,6 +234,22 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
   const writers: WixWriter[] = [];
   const localAuthors = getAllAuthors();
 
+  // Fetch Firestore metadata for all writers
+  let firestoreMap = new Map<string, WriterMetadata>();
+  try {
+    const allMeta = await getAllWriterMetadata();
+    for (const meta of allMeta) {
+      firestoreMap.set(meta.slug, meta);
+      // Also index by wixMemberId for lookup
+      if (meta.wixMemberId) {
+        firestoreMap.set(`wix:${meta.wixMemberId}`, meta);
+      }
+    }
+  } catch {
+    // Firestore unavailable — continue with local-only data
+    firestoreMap = new Map();
+  }
+
   for (const [memberId, postCount] of memberPostCount) {
     // Check if we have a local author config (by wixMemberId)
     const local = localAuthors.find((a) => a.wixMemberId === memberId);
@@ -230,6 +289,9 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         ? [...catIds].map((id) => categoryMap.get(id)).filter((l): l is string => !!l)
         : [];
 
+      // Firestore metadata overlay (priority: Firestore > local > Wix)
+      const fsMeta = firestoreMap.get(slug) ?? firestoreMap.get(`wix:${memberId}`);
+
       writers.push({
         slug,
         name: displayName,
@@ -238,11 +300,11 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         avatar,
         postCount,
         wixMemberId: memberId,
-        hireEmail: merged?.hireEmail,
-        buyMeCoffeeUrl: merged?.buyMeCoffeeUrl,
-        promptPayId: merged?.promptPayId,
-        promptPayName: merged?.promptPayName,
-        revenueSharePercent: merged?.revenueSharePercent ?? 60,
+        hireEmail: fsMeta?.hireEmail ?? merged?.hireEmail,
+        buyMeCoffeeUrl: fsMeta?.buyMeCoffeeUrl ?? merged?.buyMeCoffeeUrl,
+        promptPayId: fsMeta?.promptPayId ?? merged?.promptPayId,
+        promptPayName: fsMeta?.promptPayName ?? merged?.promptPayName,
+        revenueSharePercent: fsMeta?.revenueSharePercent ?? merged?.revenueSharePercent ?? 60,
         categories,
         totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: merged,
@@ -253,20 +315,23 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
         ? [...catIds].map((id) => categoryMap.get(id)).filter((l): l is string => !!l)
         : [];
 
-      // Member lookup failed — use local config or minimal fallback
+      // Member lookup failed — use Firestore > local config > minimal fallback
+      const fallbackSlug = local?.slug ?? memberId.slice(0, 8);
+      const fsMeta = firestoreMap.get(fallbackSlug) ?? firestoreMap.get(`wix:${memberId}`);
+
       writers.push({
-        slug: local?.slug ?? memberId.slice(0, 8),
+        slug: fallbackSlug,
         name: local?.name ?? "นักเขียน",
         title: local?.title ?? "นักเขียน",
         bio: local?.bio ?? "",
         avatar: local?.avatar ?? "",
         postCount,
         wixMemberId: memberId,
-        hireEmail: local?.hireEmail,
-        buyMeCoffeeUrl: local?.buyMeCoffeeUrl,
-        promptPayId: local?.promptPayId,
-        promptPayName: local?.promptPayName,
-        revenueSharePercent: local?.revenueSharePercent ?? 60,
+        hireEmail: fsMeta?.hireEmail ?? local?.hireEmail,
+        buyMeCoffeeUrl: fsMeta?.buyMeCoffeeUrl ?? local?.buyMeCoffeeUrl,
+        promptPayId: fsMeta?.promptPayId ?? local?.promptPayId,
+        promptPayName: fsMeta?.promptPayName ?? local?.promptPayName,
+        revenueSharePercent: fsMeta?.revenueSharePercent ?? local?.revenueSharePercent ?? 60,
         categories,
         totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: local,

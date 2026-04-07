@@ -11,6 +11,7 @@ import {
   LogOut,
   TrendingUp,
   Loader2,
+  Users,
 } from "lucide-react";
 
 interface PageData {
@@ -104,6 +105,15 @@ export default function DashboardPage() {
             <span className="text-sm text-text-muted font-sarabun hidden sm:inline">
               {user.name}
             </span>
+            {user.email === "visarutsankham@gmail.com" && (
+              <Link
+                href="/author/dashboard/writers"
+                className="p-2 rounded-full text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                title="จัดการนักเขียน"
+              >
+                <Users className="w-5 h-5" />
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="p-2 rounded-full text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
