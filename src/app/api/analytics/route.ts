@@ -39,14 +39,12 @@ export async function GET(request: NextRequest) {
   if (postSlugs.length === 0) {
     return NextResponse.json({
       totalViews: 0,
-      actualRevenue: 0,
       estimatedRevenue: 0,
       authorShare: 0,
       pages: [],
       periodLabel: `${days} วัน`,
       postCount: 0,
       revenueSharePercent: author.revenueSharePercent ?? 60,
-      isRealRevenue: false,
     });
   }
 

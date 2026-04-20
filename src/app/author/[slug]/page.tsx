@@ -145,6 +145,7 @@ async function findWriter(slug: string): Promise<{
     wixMemberId: localAuthor!.wixMemberId ?? "",
     revenueSharePercent: localAuthor!.revenueSharePercent ?? 60,
     categories: [],
+    totalViews: 0,
   };
 
   const posts = finalWriter.wixMemberId ? await getAuthorPosts(finalWriter.wixMemberId) : [];

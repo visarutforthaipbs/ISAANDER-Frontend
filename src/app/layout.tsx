@@ -89,17 +89,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {gaMeasurementId && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${gaMeasurementId}');`}
-            </Script>
-          </>
-        )}
       </head>
       <body className="min-h-full flex flex-col">
         <a href="#main-content" className="skip-link">
@@ -107,6 +96,17 @@ export default function RootLayout({
         </a>
         <PageLoading />
         <AuthProvider>
+          {gaMeasurementId && (
+            <>
+              <Script
+                src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+                strategy="afterInteractive"
+              />
+              <Script id="google-analytics" strategy="afterInteractive">
+                {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${gaMeasurementId}');`}
+              </Script>
+            </>
+          )}
           {children}
         </AuthProvider>
       </body>

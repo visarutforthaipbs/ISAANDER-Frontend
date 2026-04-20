@@ -61,12 +61,7 @@ interface AuthContextType {
   logOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  signInWithGoogle: () => {},
-  logOut: async () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -163,4 +158,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    // Fallback for SSR/Build time or when used outside provider
+    return {
+      user: null,
+      loading: true,
+      signInWithGoogle: () => {},
+      logOut: async () => {},
+    };
+  }
+  return context;
+};

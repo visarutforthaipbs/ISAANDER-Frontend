@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 
 export default function NotFound() {
   return (
     <>
-      <StickyHeader />
       <main id="main-content" className="flex-1 pb-28 flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <h1 className="font-prompt text-6xl font-bold text-primary mb-4">404</h1>
@@ -30,7 +28,6 @@ export default function NotFound() {
           </div>
         </div>
       </main>
-      <MobileBottomNav />
     </>
   );
 }
