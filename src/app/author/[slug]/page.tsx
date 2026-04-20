@@ -104,8 +104,17 @@ async function getAuthorPosts(wixMemberId: string) {
   }
 }
 
+import { getPageViews } from "@/lib/analytics";
+
 /** Find a WixWriter by slug — tries local config first, then Wix API */
-async function findWriter(slug: string): Promise<{ writer: WixWriter; posts: Awaited<ReturnType<typeof getAuthorPosts>>; totalViews: number; estimatedRevenueTHB: number; authorShareTHB: number } | null> {
+async function findWriter(slug: string): Promise<{ 
+  writer: WixWriter; 
+  posts: Awaited<ReturnType<typeof getAuthorPosts>>; 
+  totalViews: number; 
+  revenueTHB: number; 
+  authorShareTHB: number;
+  isRealRevenue: boolean;
+} | null> {
   // 1. Check local config
   const localAuthor = getAuthorBySlug(slug);
 
@@ -121,47 +130,55 @@ async function findWriter(slug: string): Promise<{ writer: WixWriter; posts: Awa
     if (localAuthor.wixMemberId) {
       writer = writers.find((w) => w.wixMemberId === localAuthor.wixMemberId);
     }
-    // If still not found, create a synthetic writer from the local config
-    if (!writer) {
-      const posts = localAuthor.wixMemberId ? await getAuthorPosts(localAuthor.wixMemberId) : [];
-      const totalViews = posts.reduce((sum: number, p: { _views?: number }) => sum + (p._views ?? 0), 0);
-      const sharePercent = localAuthor.revenueSharePercent ?? 60;
-      const estimatedRevenueTHB = Math.round((totalViews / 1000) * 30);
-      const authorShareTHB = Math.round((estimatedRevenueTHB * sharePercent) / 100);
-      return {
-        writer: {
-          slug: localAuthor.slug,
-          name: localAuthor.name,
-          title: localAuthor.title,
-          bio: localAuthor.bio,
-          avatar: localAuthor.avatar,
-          postCount: posts.length,
-          wixMemberId: localAuthor.wixMemberId ?? "",
-          hireEmail: localAuthor.hireEmail,
-          buyMeCoffeeUrl: localAuthor.buyMeCoffeeUrl,
-          promptPayId: localAuthor.promptPayId,
-          promptPayName: localAuthor.promptPayName,
-          revenueSharePercent: sharePercent,
-          categories: [],
-          totalViews,
-          localAuthor,
-        },
-        posts,
-        totalViews,
-        estimatedRevenueTHB,
-        authorShareTHB,
-      };
+  }
+
+  if (!writer && !localAuthor) return null;
+
+  // Use local author for basic info if writer not found from Wix
+  const finalWriter: WixWriter = writer || {
+    slug: localAuthor!.slug,
+    name: localAuthor!.name,
+    title: localAuthor!.title,
+    bio: localAuthor!.bio,
+    avatar: localAuthor!.avatar,
+    postCount: 0,
+    wixMemberId: localAuthor!.wixMemberId ?? "",
+    revenueSharePercent: localAuthor!.revenueSharePercent ?? 60,
+    categories: [],
+  };
+
+  const posts = finalWriter.wixMemberId ? await getAuthorPosts(finalWriter.wixMemberId) : [];
+  const totalViews = posts.reduce((sum: number, p: { _views?: number }) => sum + (p._views ?? 0), 0);
+  const sharePercent = finalWriter.revenueSharePercent ?? 60;
+
+  // Try to fetch real revenue from GA4
+  let revenueTHB = 0;
+  let isRealRevenue = false;
+
+  if (posts.length > 0) {
+    const postPaths = posts.map(p => `/post/${p.slug}`);
+    // Fetch analytics for a long period (e.g., 365 days) to get cumulative revenue
+    const analytics = await getPageViews(postPaths, 365);
+    
+    if (analytics.totalRevenue > 0) {
+      revenueTHB = analytics.totalRevenue;
+      isRealRevenue = true;
+    } else {
+      // Fallback to estimation if no real revenue data found
+      revenueTHB = (totalViews / 1000) * 30;
     }
   }
 
-  if (!writer) return null;
-
-  const posts = writer.wixMemberId ? await getAuthorPosts(writer.wixMemberId) : [];
-  const totalViews = posts.reduce((sum: number, p: { _views?: number }) => sum + (p._views ?? 0), 0);
-  const sharePercent = writer.revenueSharePercent ?? 60;
-  const estimatedRevenueTHB = Math.round((totalViews / 1000) * 30);
-  const authorShareTHB = Math.round((estimatedRevenueTHB * sharePercent) / 100);
-  return { writer, posts, totalViews, estimatedRevenueTHB, authorShareTHB };
+  const authorShareTHB = Math.round((revenueTHB * sharePercent) / 100);
+  
+  return { 
+    writer: { ...finalWriter, postCount: posts.length, totalViews, localAuthor }, 
+    posts, 
+    totalViews, 
+    revenueTHB: Math.round(revenueTHB), 
+    authorShareTHB,
+    isRealRevenue
+  };
 }
 
 // --- Metadata ---
@@ -194,7 +211,7 @@ export default async function AuthorProfilePage({
   const result = await findWriter(slug);
   if (!result) notFound();
 
-  const { writer, posts: authorPosts, totalViews, estimatedRevenueTHB, authorShareTHB } = result;
+  const { writer, posts: authorPosts, totalViews, revenueTHB, authorShareTHB, isRealRevenue } = result;
   const author = writer.localAuthor;
 
   const socialLinks = author?.socialLinks ?? writer.socialLinks ?? {};
@@ -326,18 +343,25 @@ export default async function AuthorProfilePage({
         {writer.revenueSharePercent && writer.postCount > 0 && (
           <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-6">
             <div className="bg-surface rounded-xl border border-black/5 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-primary" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-prompt font-semibold text-text-main text-sm">
+                      Revenue Share
+                    </h3>
+                    <p className="font-sarabun text-xs text-text-muted">
+                      ส่วนแบ่งรายได้จากโฆษณา
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-prompt font-semibold text-text-main text-sm">
-                    Revenue Share
-                  </h3>
-                  <p className="font-sarabun text-xs text-text-muted">
-                    ส่วนแบ่งรายได้จากโฆษณา
-                  </p>
-                </div>
+                {isRealRevenue && (
+                  <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                    Real Data
+                  </span>
+                )}
               </div>
 
               {/* Stats row */}
@@ -350,7 +374,7 @@ export default async function AuthorProfilePage({
                 </div>
                 <div className="bg-black/[0.02] rounded-lg p-3 text-center">
                   <p className="font-prompt text-lg font-bold text-text-main">
-                    ฿{estimatedRevenueTHB.toLocaleString()}
+                    ฿{revenueTHB.toLocaleString()}
                   </p>
                   <p className="font-sarabun text-xs text-text-muted">รายได้รวม</p>
                 </div>
@@ -373,12 +397,15 @@ export default async function AuthorProfilePage({
                   </div>
                   <div className="flex justify-between mt-2 text-xs font-sarabun text-text-muted">
                     <span>นักเขียน {writer.revenueSharePercent}% — ฿{authorShareTHB.toLocaleString()}</span>
-                    <span>แพลตฟอร์ม {100 - writer.revenueSharePercent}% — ฿{(estimatedRevenueTHB - authorShareTHB).toLocaleString()}</span>
+                    <span>แพลตฟอร์ม {100 - writer.revenueSharePercent}% — ฿{(revenueTHB - authorShareTHB).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
-              <p className="font-sarabun text-xs text-text-muted mt-3">
-                * ประมาณการจาก RPM ฿30/1,000 วิว · {writer.postCount} บทความ
+              <p className="font-sarabun text-xs text-text-muted mt-3 italic">
+                {isRealRevenue 
+                  ? `* คำนวณจากรายได้ AdSense จริงย้อนหลัง 1 ปี · ${writer.postCount} บทความ`
+                  : `* ประมาณการเบื้องต้น (RPM ฿30) · ${writer.postCount} บทความ`
+                }
               </p>
             </div>
           </section>

@@ -29,16 +29,20 @@ export interface PageViewData {
   path: string;
   pageTitle: string;
   views: number;
+  revenue: number;
+  impressions: number;
 }
 
 export interface AuthorAnalytics {
   totalViews: number;
+  totalRevenue: number;
+  totalImpressions: number;
   pages: PageViewData[];
   periodLabel: string;
 }
 
 /**
- * Fetch pageview data from GA4 for pages matching given path prefixes.
+ * Fetch pageview and revenue data from GA4 for pages matching given path prefixes.
  * @param pathPrefixes - e.g. ["/post/my-slug", "/post/another-slug"]
  * @param days - lookback period in days (default 30)
  */
@@ -47,7 +51,7 @@ export async function getPageViews(
   days: number = 30
 ): Promise<AuthorAnalytics> {
   if (!PROPERTY_ID) {
-    return { totalViews: 0, pages: [], periodLabel: `${days} วัน` };
+    return { totalViews: 0, totalRevenue: 0, totalImpressions: 0, pages: [], periodLabel: `${days} วัน` };
   }
 
   try {
@@ -60,7 +64,11 @@ export async function getPageViews(
         { name: "pagePath" },
         { name: "pageTitle" },
       ],
-      metrics: [{ name: "screenPageViews" }],
+      metrics: [
+        { name: "screenPageViews" },
+        { name: "publisherAdRevenue" },
+        { name: "publisherAdImpressions" },
+      ],
       dimensionFilter: {
         orGroup: {
           expressions: pathPrefixes.map((prefix) => ({
@@ -87,18 +95,24 @@ export async function getPageViews(
       path: row.dimensionValues?.[0]?.value ?? "",
       pageTitle: row.dimensionValues?.[1]?.value ?? "",
       views: parseInt(row.metricValues?.[0]?.value ?? "0", 10),
+      revenue: parseFloat(row.metricValues?.[1]?.value ?? "0"),
+      impressions: parseInt(row.metricValues?.[2]?.value ?? "0", 10),
     }));
 
     const totalViews = pages.reduce((sum, p) => sum + p.views, 0);
+    const totalRevenue = pages.reduce((sum, p) => sum + p.revenue, 0);
+    const totalImpressions = pages.reduce((sum, p) => sum + p.impressions, 0);
 
     return {
       totalViews,
+      totalRevenue,
+      totalImpressions,
       pages,
       periodLabel: `${days} วัน`,
     };
   } catch (error) {
     console.error("GA4 API error:", error);
-    return { totalViews: 0, pages: [], periodLabel: `${days} วัน` };
+    return { totalViews: 0, totalRevenue: 0, totalImpressions: 0, pages: [], periodLabel: `${days} วัน` };
   }
 }
 

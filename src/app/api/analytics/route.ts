@@ -39,12 +39,14 @@ export async function GET(request: NextRequest) {
   if (postSlugs.length === 0) {
     return NextResponse.json({
       totalViews: 0,
+      actualRevenue: 0,
       estimatedRevenue: 0,
       authorShare: 0,
       pages: [],
       periodLabel: `${days} วัน`,
       postCount: 0,
       revenueSharePercent: author.revenueSharePercent ?? 60,
+      isRealRevenue: false,
     });
   }
 
@@ -53,16 +55,28 @@ export async function GET(request: NextRequest) {
   const analytics = await getPageViews(pathPrefixes, days);
 
   const revenueSharePercent = author.revenueSharePercent ?? 60;
-  const totalEstimatedRevenue = estimateRevenue(analytics.totalViews);
-  const authorShare = (totalEstimatedRevenue * revenueSharePercent) / 100;
+  
+  let totalRevenue = 0;
+  let isRealRevenue = false;
+
+  if (analytics.totalRevenue > 0) {
+    totalRevenue = analytics.totalRevenue;
+    isRealRevenue = true;
+  } else {
+    totalRevenue = estimateRevenue(analytics.totalViews);
+  }
+
+  const authorShare = (totalRevenue * revenueSharePercent) / 100;
 
   return NextResponse.json({
     totalViews: analytics.totalViews,
-    estimatedRevenue: Math.round(totalEstimatedRevenue * 100) / 100,
+    actualRevenue: analytics.totalRevenue,
+    estimatedRevenue: Math.round(totalRevenue * 100) / 100,
     authorShare: Math.round(authorShare * 100) / 100,
     pages: analytics.pages,
     periodLabel: analytics.periodLabel,
     postCount: postSlugs.length,
     revenueSharePercent,
+    isRealRevenue,
   });
 }
