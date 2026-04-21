@@ -1,7 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Heart, ExternalLink } from "lucide-react";
 import type { Author } from "@/data/authors";
-import { PromptPayQR } from "@/components/promptpay-qr";
+
+const PromptPayQR = dynamic(() => import("@/components/promptpay-qr").then((m) => m.PromptPayQR), {
+  ssr: false,
+});
 
 interface TipSectionProps {
   author: Author;
@@ -34,10 +41,12 @@ export function TipSection({ author }: TipSectionProps) {
       <div className="flex items-center gap-3 mb-6 pb-5 border-b border-black/5">
         <Link href={`/author/${author.slug}`}>
           {author.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={author.avatar}
               alt={author.name}
+              width={48}
+              height={48}
+              unoptimized
               className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
             />
           ) : (

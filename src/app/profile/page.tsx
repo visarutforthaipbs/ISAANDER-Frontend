@@ -10,7 +10,7 @@ import { CheckCircle2, ChevronRight, LogOut, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const { user, loading, logOut } = useAuth();
+  const { user, loading, logOut, signInWithGoogle } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -21,13 +21,6 @@ export default function ProfilePage() {
   const [facebook, setFacebook] = useState("");
   const [twitter, setTwitter] = useState("");
   const [instagram, setInstagram] = useState("");
-
-  // Guard: if not loading and no user, Redirect to home
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/");
-    }
-  }, [user, loading, router]);
 
   // Load existing data
   useEffect(() => {
@@ -40,11 +33,36 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <StickyHeader showBack />
+        <main id="main-content" className="flex-1 pb-28 flex items-center justify-center px-4">
+          <div className="text-center max-w-sm">
+            <h1 className="font-prompt text-2xl font-bold text-text-main mb-2">
+              กรุณาเข้าสู่ระบบ
+            </h1>
+            <p className="font-sarabun text-text-muted mb-6">
+              เข้าสู่ระบบเพื่อจัดการโปรไฟล์และบันทึกบทความที่สนใจ
+            </p>
+            <button
+              onClick={signInWithGoogle}
+              className="inline-flex items-center justify-center gap-2 bg-primary text-white font-sarabun font-medium px-6 py-3 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              เข้าสู่ระบบผ่าน Google
+            </button>
+          </div>
+        </main>
+        <MobileBottomNav />
+      </>
     );
   }
 
@@ -156,6 +174,8 @@ export default function ProfilePage() {
                 <input
                   id="phone"
                   type="tel"
+                  inputMode="tel"
+                  pattern="[0-9\-]*"
                   placeholder="08X-XXX-XXXX"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}

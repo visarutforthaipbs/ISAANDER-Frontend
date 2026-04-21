@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { media } from "@wix/sdk";
-import { Clock, ArrowLeft } from "lucide-react";
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import wixClient from "@/lib/wix-client";
 import { formatDate } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { SaveButton } from "@/components/save-button";
 import { ReadingProgress } from "@/components/reading-progress";
 import { TipSection } from "@/components/tip-section";
 import { BackToTop } from "@/components/back-to-top";
+import { BackButton } from "@/components/back-button";
 import { TableOfContents } from "@/components/table-of-contents";
 import { AdSenseSlot } from "@/components/adsense-slot";
 
@@ -61,11 +62,30 @@ export async function generateMetadata({
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   const post = await getPostBySlug(decodedSlug);
-  if (!post) return { title: "ไม่พบบทความ — The Isaander" };
+  if (!post) return { title: "ไม่พบบทความ — The Isaander", robots: { index: false } };
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
+  const coverUrl = post.media?.wixMedia?.image
+    ? (() => { try { return media.getScaledToFillImageUrl(post.media!.wixMedia!.image!, 1200, 675, {}); } catch { return null; } })()
+    : null;
 
   return {
     title: `${post.title} — The Isaander`,
     description: post.excerpt ?? "",
+    alternates: { canonical: `${baseUrl}/post/${decodedSlug}` },
+    openGraph: {
+      title: `${post.title} — The Isaander`,
+      description: post.excerpt ?? "",
+      url: `${baseUrl}/post/${decodedSlug}`,
+      type: "article",
+      images: coverUrl ? [{ url: coverUrl, width: 1200, height: 675 }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${post.title} — The Isaander`,
+      description: post.excerpt ?? "",
+      images: coverUrl ? [coverUrl] : undefined,
+    },
   };
 }
 
@@ -157,13 +177,7 @@ export default async function PostPage({
       <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="p-2 -ml-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
-              aria-label="กลับหน้าแรก"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
+            <BackButton />
             <Link
               href="/"
               className="font-prompt text-xl font-bold text-primary tracking-tight"
@@ -226,6 +240,7 @@ export default async function PostPage({
               href={`/author/${author.slug}`}
               className="flex items-center gap-3 mt-4 group"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={author.avatar}
                 alt={author.name}

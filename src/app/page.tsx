@@ -73,7 +73,7 @@ function HeroDeepDive({
               alt={post.title ?? ""}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 700px"
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover motion-safe:group-hover:scale-105 transition-transform duration-300"
               priority
             />
           </div>
@@ -98,9 +98,12 @@ function HeroDeepDive({
           {author && (
             <div className="flex items-center gap-2 mt-3">
               {author.avatar ? (
-                <img
+                <Image
                   src={author.avatar}
                   alt={author.name}
+                  width={24}
+                  height={24}
+                  unoptimized
                   className="w-6 h-6 rounded-full object-cover border border-white/30"
                 />
               ) : (
@@ -184,9 +187,12 @@ function HistoryCarousel({
                 {author && (
                   <div className="flex items-center gap-2">
                     {author.avatar ? (
-                      <img
+                      <Image
                         src={author.avatar}
                         alt={author.name}
+                        width={16}
+                        height={16}
+                        unoptimized
                         className="w-4 h-4 rounded-full object-cover"
                       />
                     ) : (
@@ -273,9 +279,12 @@ function StandardFeed({
                 {author && (
                   <div className="flex items-center gap-2">
                     {author.avatar ? (
-                      <img
+                      <Image
                         src={author.avatar}
                         alt={author.name}
+                        width={16}
+                        height={16}
+                        unoptimized
                         className="w-4 h-4 rounded-full object-cover"
                       />
                     ) : (
@@ -329,14 +338,20 @@ export default async function HomePage() {
     console.error("Failed to fetch posts from Wix:", error);
   }
 
+  const hasError = !heroPost && latestPosts.length === 0;
+
   // Pre-resolve all author avatars from Wix (async)
   const authorMap: AuthorMap = new Map();
   const allPosts = [...(heroPost ? [heroPost] : []), ...latestPosts];
   await Promise.all(
     allPosts.map(async (post) => {
       if (post._id) {
-        const author = await resolveAuthorAsync(post);
-        authorMap.set(post._id, author);
+        try {
+          const author = await resolveAuthorAsync(post);
+          authorMap.set(post._id, author);
+        } catch {
+          authorMap.set(post._id, { name: "The Isaander", avatar: "" });
+        }
       }
     })
   );
@@ -346,6 +361,26 @@ export default async function HomePage() {
       <WelcomePopup />
       <StickyHeader />
       <main id="main-content" className="flex-1 pb-28">
+        {/* Error fallback */}
+        {hasError && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 text-center">
+            <div className="bg-surface rounded-2xl border border-black/5 shadow-sm p-8 max-w-md mx-auto">
+              <h2 className="font-prompt text-xl font-bold text-text-main mb-2">
+                ไม่สามารถโหลดเนื้อหาได้
+              </h2>
+              <p className="font-sarabun text-sm text-text-muted mb-6">
+                กรุณาลองใหม่อีกครั้ง หรือตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-2 bg-primary text-white font-sarabun font-medium px-6 py-2.5 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                ลองใหม่อีกครั้ง
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Wider container with desktop 2-column layout */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4">
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-10 lg:items-start">
@@ -395,9 +430,12 @@ export default async function HomePage() {
                         className="flex items-center gap-3 bg-surface rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
                       >
                         {writer.avatar ? (
-                          <img
+                          <Image
                             src={writer.avatar}
                             alt={writer.name}
+                            width={40}
+                            height={40}
+                            unoptimized
                             className="w-10 h-10 rounded-full object-cover shrink-0"
                           />
                         ) : (

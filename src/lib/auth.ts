@@ -1,9 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "theisaander-default-secret-change-me"
-);
+const secretEnv = process.env.JWT_SECRET;
+if (!secretEnv) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+const SECRET = new TextEncoder().encode(secretEnv);
 
 const COOKIE_NAME = "isaander_token";
 const EXPIRATION = "7d";

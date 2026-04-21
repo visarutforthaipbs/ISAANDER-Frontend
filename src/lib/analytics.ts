@@ -66,7 +66,7 @@ export async function getPageViews(
       ],
       metrics: [
         { name: "screenPageViews" },
-        { name: "publisherAdRevenue" },
+        { name: "totalAdRevenue" },
         { name: "publisherAdImpressions" },
       ],
       dimensionFilter: {

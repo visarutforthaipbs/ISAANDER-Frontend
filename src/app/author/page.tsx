@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 import Link from "next/link";
 import { fetchWixWriters } from "@/lib/author-utils";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
@@ -41,9 +41,12 @@ export default async function AuthorsPage() {
                 >
                   <div className="flex items-center gap-4">
                     {writer.avatar ? (
-                      <img
+                      <Image
                         src={writer.avatar}
                         alt={writer.name}
+                        width={64}
+                        height={64}
+                        unoptimized
                         className="w-16 h-16 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
                       />
                     ) : (

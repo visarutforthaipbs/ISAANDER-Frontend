@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
-import { media } from "@wix/sdk";
+import Image from "next/image";
 import Link from "next/link";
 import wixClient from "@/lib/wix-client";
-import { formatDate } from "@/lib/utils";
-import { resolveAuthor } from "@/lib/author-utils";
+import { getPostImageUrl, formatDate } from "@/lib/utils";
+import { resolveAuthorAsync } from "@/lib/author-utils";
+import type { Author } from "@/data/authors";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 
 export const revalidate = 300;
@@ -30,18 +30,7 @@ async function getPostsByCategory(categoryId: string) {
   }
 }
 
-function getPostImageUrl(
-  imageString: string | undefined,
-  width: number,
-  height: number
-): string | null {
-  if (!imageString) return null;
-  try {
-    return media.getScaledToFillImageUrl(imageString, width, height, {});
-  } catch {
-    return null;
-  }
-}
+
 
 export default async function ExplorePage() {
   const categories = await getCategories();
@@ -56,6 +45,22 @@ export default async function ExplorePage() {
 
   // Filter out empty categories
   const nonEmpty = categoryPosts.filter((cp) => cp.posts.length > 0);
+
+  // Pre-resolve all authors asynchronously (same pattern as homepage)
+  const authorMap = new Map<string, Author>();
+  const allPosts = nonEmpty.flatMap((cp) => cp.posts);
+  await Promise.all(
+    allPosts.map(async (post) => {
+      if (post._id && post.memberId) {
+        try {
+          const author = await resolveAuthorAsync(post);
+          authorMap.set(post._id, author);
+        } catch {
+          authorMap.set(post._id, { name: "The Isaander", avatar: "" } as Author);
+        }
+      }
+    })
+  );
 
   return (
     <>
@@ -104,6 +109,7 @@ export default async function ExplorePage() {
                     400,
                     250
                   );
+                  const author = post._id ? authorMap.get(post._id) : undefined;
 
                   return (
                     <Link
@@ -112,11 +118,15 @@ export default async function ExplorePage() {
                       className="w-64 shrink-0 snap-center bg-surface rounded-lg shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
                     >
                       {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={post.title ?? ""}
-                          className="rounded-md aspect-[16/10] w-full object-cover"
-                        />
+                        <div className="relative rounded-md aspect-[16/10] w-full overflow-hidden">
+                          <Image
+                            src={imageUrl}
+                            alt={post.title ?? ""}
+                            fill
+                            sizes="256px"
+                            className="object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-slate-200 rounded-md aspect-[16/10] w-full" />
                       )}
@@ -124,13 +134,24 @@ export default async function ExplorePage() {
                         {post.title}
                       </h3>
                       <div className="flex items-center gap-1.5">
-                        <img
-                          src={resolveAuthor(post).avatar}
-                          alt={resolveAuthor(post).name}
-                          className="w-4 h-4 rounded-full object-cover"
-                        />
+                        {author?.avatar ? (
+                          <Image
+                            src={author.avatar}
+                            alt={author.name}
+                            width={16}
+                            height={16}
+                            unoptimized
+                            className="w-4 h-4 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center">
+                            <span className="text-[8px] text-primary font-prompt font-bold">
+                              {(author?.name || "?").charAt(0)}
+                            </span>
+                          </div>
+                        )}
                         <span className="font-sarabun text-xs text-text-muted truncate">
-                          {resolveAuthor(post).name}
+                          {author?.name || "The Isaander"}
                         </span>
                       </div>
                       <time

@@ -1,24 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, X, Send, CheckCircle2 } from "lucide-react";
-import { PromptPayQR } from "@/components/promptpay-qr";
+import dynamic from "next/dynamic";
+import { Share2, X, Send, CheckCircle2, Check } from "lucide-react";
+import { useFocusTrap } from "@/components/focus-trap";
+
+const PromptPayQR = dynamic(() => import("@/components/promptpay-qr").then((m) => m.PromptPayQR), {
+  ssr: false,
+});
 
 export function ShareButton({ title }: { title: string }) {
+  const [copied, setCopied] = useState(false);
+
   return (
     <button
       type="button"
-      aria-label="แชร์บทความ"
-      className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
+      aria-label={copied ? "คัดลอกลิงก์แล้ว" : "แชร์บทความ"}
+      className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
       onClick={() => {
         if (navigator.share) {
           navigator.share({ title, url: window.location.href });
         } else {
-          navigator.clipboard.writeText(window.location.href);
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          });
         }
       }}
     >
-      <Share2 className="w-5 h-5" />
+      {copied ? <Check className="w-5 h-5 text-green-600" /> : <Share2 className="w-5 h-5" />}
     </button>
   );
 }
@@ -34,6 +44,7 @@ interface TipButtonProps {
 
 export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonProps) {
   const [open, setOpen] = useState(false);
+  const trapRef = useFocusTrap(open);
 
   if (!promptPayId) return null;
 
@@ -49,8 +60,12 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
 
       {open && (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          ref={trapRef}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tip-title"
         >
           <div
             className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
@@ -66,7 +81,7 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
             </button>
 
             <div className="text-center mb-4">
-              <h2 className="font-prompt font-bold text-xl text-text-main">
+              <h2 id="tip-title" className="font-prompt font-bold text-xl text-text-main">
                 🍲 เลี้ยงลาบนักเขียน
               </h2>
               <p className="font-sarabun text-sm text-text-muted mt-1">
@@ -98,6 +113,7 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", org: "", message: "" });
+  const trapRef = useFocusTrap(open);
 
   const email = hireEmail ?? "contact@theisaander.com";
 
@@ -129,8 +145,12 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
 
       {open && (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          ref={trapRef}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={handleClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hire-title"
         >
           <div
             className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
@@ -165,7 +185,7 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
             ) : (
               <>
                 <div className="mb-5">
-                  <h2 className="font-prompt font-bold text-xl text-text-main">
+                  <h2 id="hire-title" className="font-prompt font-bold text-xl text-text-main">
                     ร่วมงานกับผู้เชี่ยวชาญในอีสาน
                   </h2>
                   <p className="font-sarabun text-sm text-text-muted mt-1">
@@ -176,10 +196,11 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-sarabun text-xs text-text-muted mb-1">
+                      <label htmlFor="hire-name" className="block font-sarabun text-xs text-text-muted mb-1">
                         ชื่อของคุณ <span className="text-red-500">*</span>
                       </label>
                       <input
+                        id="hire-name"
                         required
                         type="text"
                         value={form.name}
@@ -189,10 +210,11 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
                       />
                     </div>
                     <div>
-                      <label className="block font-sarabun text-xs text-text-muted mb-1">
+                      <label htmlFor="hire-email" className="block font-sarabun text-xs text-text-muted mb-1">
                         อีเมล <span className="text-red-500">*</span>
                       </label>
                       <input
+                        id="hire-email"
                         required
                         type="email"
                         value={form.email}
@@ -204,10 +226,11 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
                   </div>
 
                   <div>
-                    <label className="block font-sarabun text-xs text-text-muted mb-1">
+                    <label htmlFor="hire-org" className="block font-sarabun text-xs text-text-muted mb-1">
                       องค์กร / โครงการ
                     </label>
                     <input
+                      id="hire-org"
                       type="text"
                       value={form.org}
                       onChange={(e) => setForm((f) => ({ ...f, org: e.target.value }))}
@@ -217,10 +240,11 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
                   </div>
 
                   <div>
-                    <label className="block font-sarabun text-xs text-text-muted mb-1">
+                    <label htmlFor="hire-message" className="block font-sarabun text-xs text-text-muted mb-1">
                       รายละเอียดงาน <span className="text-red-500">*</span>
                     </label>
                     <textarea
+                      id="hire-message"
                       required
                       rows={3}
                       value={form.message}

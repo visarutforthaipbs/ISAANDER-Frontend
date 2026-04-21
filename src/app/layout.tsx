@@ -27,25 +27,33 @@ const dbHelvethaica = localFont({
   display: "swap",
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
+const defaultOgImage = `${baseUrl}/og-default.jpg`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com"),
+  metadataBase: new URL(baseUrl),
   title: {
     default: "The Isaander | สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
     template: "%s | The Isaander",
   },
   description: "The Isaander สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย นำเสนอข่าวเชิงลึก สังคม การเมือง และวัฒนธรรม",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "The Isaander | สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
     description: "The Isaander สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย นำเสนอข่าวเชิงลึก สังคม การเมือง และวัฒนธรรม",
-    url: "https://www.theisaander.com",
+    url: baseUrl,
     siteName: "The Isaander",
     locale: "th_TH",
     type: "website",
+    images: [{ url: defaultOgImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "The Isaander",
     description: "สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
+    images: [defaultOgImage],
   },
   robots: {
     index: true,
@@ -58,6 +66,17 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  other: {
+    preconnect: [
+      "https://static.wixstatic.com",
+      "https://www.googletagmanager.com",
+    ],
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -72,7 +91,7 @@ export default function RootLayout({
     name: "The Isaander",
     alternateName: "The Isaander สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
     url: "https://www.theisaander.com",
-    logo: "https://www.theisaander.com/logo.png",
+    logo: `${baseUrl}/logo.png`,
     sameAs: [
       "https://www.facebook.com/TheIsaander",
       "https://twitter.com/TheIsaander"
@@ -85,6 +104,8 @@ export default function RootLayout({
       className={`${dbHelvethaica.variable} h-full antialiased`}
     >
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#C15C3D" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

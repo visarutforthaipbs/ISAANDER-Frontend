@@ -1,7 +1,7 @@
 import { media } from "@wix/sdk";
 import { ImageLightbox } from "@/components/image-lightbox";
 
-/* eslint-disable @next/next/no-img-element */
+
 
 // ---- Types (mirrors Wix RichContent node structure) ----
 
@@ -108,6 +108,16 @@ function getWixImageUrl(src: { url?: string } | null | undefined, w: number, h: 
 
 // ---- Decoration Renderer ----
 
+/** Validate URL to prevent javascript: XSS */
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, "https://example.com");
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function renderTextWithDecorations(text: string, decorations?: Decoration[]): React.ReactNode {
   if (!decorations || decorations.length === 0) return text;
 
@@ -128,7 +138,7 @@ function renderTextWithDecorations(text: string, decorations?: Decoration[]): Re
         node = <s>{node}</s>;
         break;
       case "LINK":
-        if (dec.linkData?.link?.url) {
+        if (dec.linkData?.link?.url && isSafeUrl(dec.linkData.link.url)) {
           node = (
             <a
               href={dec.linkData.link.url}
@@ -301,7 +311,7 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "LINK_PREVIEW": {
       const url = node.linkPreviewData?.link?.url;
-      if (!url) return null;
+      if (!url || !isSafeUrl(url)) return null;
       return (
         <a
           href={url}

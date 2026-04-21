@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import {
   getAuthorByWixMemberId,
   getDefaultAuthor,
@@ -38,93 +39,95 @@ const memberAvatarCache = new Map<string, { name: string; avatar: string }>();
  * profile photo and name when no local author match is available.
  * Returns a full Author shape so it can be used as a drop-in replacement.
  */
-export async function resolveAuthorAsync(
-  post: PostLike
-): Promise<Author> {
-  const memberId = post.memberId;
+export const resolveAuthorAsync = unstable_cache(
+  async (post: PostLike): Promise<Author> => {
+    const memberId = post.memberId;
 
-  if (!memberId) return getDefaultAuthor();
+    if (!memberId) return getDefaultAuthor();
 
-  // Check local author match first
-  const localMatch = getAuthorByWixMemberId(memberId);
+    // Check local author match first
+    const localMatch = getAuthorByWixMemberId(memberId);
 
-  // Check Firestore for additional metadata
-  let firestoreMeta: WriterMetadata | null = null;
-  try {
-    if (localMatch) {
-      firestoreMeta = await getFirestoreWriterBySlug(localMatch.slug);
+    // Check Firestore for additional metadata
+    let firestoreMeta: WriterMetadata | null = null;
+    try {
+      if (localMatch) {
+        firestoreMeta = await getFirestoreWriterBySlug(localMatch.slug);
+      }
+      if (!firestoreMeta) {
+        firestoreMeta = await getFirestoreWriterByWixMemberId(memberId);
+      }
+    } catch {
+      // Firestore unavailable — continue with local data
     }
-    if (!firestoreMeta) {
-      firestoreMeta = await getFirestoreWriterByWixMemberId(memberId);
-    }
-  } catch {
-    // Firestore unavailable — continue with local data
-  }
 
-  // If local match has a populated avatar, return directly (with Firestore overlay)
-  if (localMatch && localMatch.avatar && localMatch.avatar.startsWith("http")) {
-    if (firestoreMeta) {
+    // If local match has a populated avatar, return directly (with Firestore overlay)
+    if (localMatch && localMatch.avatar && localMatch.avatar.startsWith("http")) {
+      if (firestoreMeta) {
+        return {
+          ...localMatch,
+          promptPayId: firestoreMeta.promptPayId ?? localMatch.promptPayId,
+          promptPayName: firestoreMeta.promptPayName ?? localMatch.promptPayName,
+          hireEmail: firestoreMeta.hireEmail ?? localMatch.hireEmail,
+          buyMeCoffeeUrl: firestoreMeta.buyMeCoffeeUrl ?? localMatch.buyMeCoffeeUrl,
+          revenueSharePercent: firestoreMeta.revenueSharePercent ?? localMatch.revenueSharePercent,
+          socialLinks: { ...localMatch.socialLinks, ...firestoreMeta.socialLinks },
+          expertise: firestoreMeta.expertise ?? localMatch.expertise,
+        };
+      }
+      return localMatch;
+    }
+
+    // Check in-memory cache
+    if (memberAvatarCache.has(memberId)) {
+      const cached = memberAvatarCache.get(memberId)!;
+      const base = localMatch || getDefaultAuthor();
       return {
-        ...localMatch,
-        promptPayId: firestoreMeta.promptPayId ?? localMatch.promptPayId,
-        promptPayName: firestoreMeta.promptPayName ?? localMatch.promptPayName,
-        hireEmail: firestoreMeta.hireEmail ?? localMatch.hireEmail,
-        buyMeCoffeeUrl: firestoreMeta.buyMeCoffeeUrl ?? localMatch.buyMeCoffeeUrl,
-        revenueSharePercent: firestoreMeta.revenueSharePercent ?? localMatch.revenueSharePercent,
-        socialLinks: { ...localMatch.socialLinks, ...firestoreMeta.socialLinks },
-        expertise: firestoreMeta.expertise ?? localMatch.expertise,
+        ...base,
+        name: cached.name || base.name,
+        avatar: cached.avatar || base.avatar,
       };
     }
-    return localMatch;
-  }
 
-  // Check cache
-  if (memberAvatarCache.has(memberId)) {
-    const cached = memberAvatarCache.get(memberId)!;
-    const base = localMatch || getDefaultAuthor();
-    return {
-      ...base,
-      name: cached.name || base.name,
-      avatar: cached.avatar || base.avatar,
-    };
-  }
-
-  try {
-    const member = await wixClient.members.getMember(memberId, {
-      fieldsets: ["FULL"],
-    });
-
-    let firestoreMeta: any = null;
     try {
-      const db = getAdminFirestore();
-      const snap = await db.collection("authors_metadata").doc(memberId).get();
-      if (snap.exists) firestoreMeta = snap.data();
-    } catch {}
+      const member = await wixClient.members.getMember(memberId, {
+        fieldsets: ["FULL"],
+      });
 
-    const firstName = member?.contact?.firstName ?? "";
-    const lastName = member?.contact?.lastName ?? "";
-    const wixName = firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname;
-    const name = firestoreMeta?.promptPayName || localMatch?.name || wixName || "นักเขียน";
-    
-    const photo = member?.profile?.photo?.url ?? "";
-    const slug = localMatch?.slug || member?.profile?.slug || memberId;
+      let fsMeta: any = null;
+      try {
+        const db = getAdminFirestore();
+        const snap = await db.collection("authors_metadata").doc(memberId).get();
+        if (snap.exists) fsMeta = snap.data();
+      } catch {}
 
-    const resolved = { name, avatar: photo };
-    memberAvatarCache.set(memberId, resolved);
+      const firstName = member?.contact?.firstName ?? "";
+      const lastName = member?.contact?.lastName ?? "";
+      const wixName = firstName && lastName ? `${firstName} ${lastName}` : firstName || member?.profile?.nickname;
+      const name = fsMeta?.promptPayName || localMatch?.name || wixName || "นักเขียน";
 
-    const base = localMatch || getDefaultAuthor();
-    return {
-      ...base,
-      slug,
-      name,
-      avatar: photo || localMatch?.avatar || base.avatar,
-    };
-  } catch {
-    const fallback = localMatch || getDefaultAuthor();
-    memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
-    return fallback;
-  }
-}
+      const photo = member?.profile?.photo?.url ?? "";
+      const slug = localMatch?.slug || member?.profile?.slug || memberId;
+
+      const resolved = { name, avatar: photo };
+      memberAvatarCache.set(memberId, resolved);
+
+      const base = localMatch || getDefaultAuthor();
+      return {
+        ...base,
+        slug,
+        name,
+        avatar: photo || localMatch?.avatar || base.avatar,
+      };
+    } catch {
+      const fallback = localMatch || getDefaultAuthor();
+      memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
+      return fallback;
+    }
+  },
+  ["resolve-author"],
+  { revalidate: 300 }
+);
 
 /** A writer obtained from Wix, merged with any local config */
 export interface WixWriter {
@@ -163,7 +166,7 @@ export interface WixWriter {
  * 2. Looking up member profiles via @wix/members
  * 3. Merging with local author config
  */
-export async function fetchWixWriters(): Promise<WixWriter[]> {
+const _fetchWixWriters = async (): Promise<WixWriter[]> => {
   // Fetch all posts (paginated — get up to 200)
   const allPosts: { _id?: string; memberId?: string | null; categoryIds?: string[] }[] = [];
   let offset = 0;
@@ -356,4 +359,10 @@ export async function fetchWixWriters(): Promise<WixWriter[]> {
   writers.sort((a, b) => b.totalViews - a.totalViews || b.postCount - a.postCount);
 
   return writers;
-}
+};
+
+export const fetchWixWriters = unstable_cache(
+  _fetchWixWriters,
+  ["wix-writers"],
+  { revalidate: 300 }
+);

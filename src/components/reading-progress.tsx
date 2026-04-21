@@ -1,31 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function ReadingProgress() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const lastProgress = useRef(0);
 
   useEffect(() => {
     function update() {
       const { scrollTop, scrollHeight, clientHeight } =
         document.documentElement;
       const total = scrollHeight - clientHeight;
-      setProgress(total > 0 ? (scrollTop / total) * 100 : 0);
+      const progress = total > 0 ? (scrollTop / total) * 100 : 0;
+
+      // Only update DOM if value changed (avoids unnecessary paint)
+      if (Math.abs(progress - lastProgress.current) > 0.1) {
+        lastProgress.current = progress;
+        if (barRef.current) {
+          barRef.current.style.setProperty("--rp", `${progress}%`);
+          barRef.current.setAttribute("aria-valuenow", String(Math.round(progress)));
+        }
+      }
+      rafRef.current = 0;
     }
-    window.addEventListener("scroll", update, { passive: true });
-    update();
-    return () => window.removeEventListener("scroll", update);
+
+    function onScroll() {
+      if (rafRef.current) return; // skip if RAF already queued
+      rafRef.current = requestAnimationFrame(update);
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    update(); // initial
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return (
     <div
+      ref={barRef}
       role="progressbar"
-      aria-valuenow={Math.round(progress)}
+      aria-valuenow={0}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label="ความคืบหน้าการอ่าน"
-      className="fixed top-14 left-0 z-50 h-[3px] bg-primary transition-[width] duration-150 ease-out"
-      style={{ width: `${progress}%` }}
+      className="fixed top-14 left-0 z-50 h-[3px] bg-primary transition-none"
+      style={{ width: "var(--rp, 0%)" }}
     />
   );
 }

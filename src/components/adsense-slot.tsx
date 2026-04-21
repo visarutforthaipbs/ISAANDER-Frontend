@@ -32,22 +32,23 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
   return (
     <div className={className}>
       <p className="font-sarabun text-xs text-text-muted text-center mb-2">โฆษณา</p>
-
-      <Script
-        id={`adsense-script-${slot}`}
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-        strategy="afterInteractive"
-        crossOrigin="anonymous"
-      />
-
-      <ins
-        className="adsbygoogle block"
-        style={{ display: "block" }}
-        data-ad-client={adClient}
-        data-ad-slot={slot}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
+      {/* min-h prevents layout shift while ad loads */}
+      <div className="min-h-[250px] flex items-center justify-center">
+        {/* Use a standard script tag to avoid Next.js data-nscript attribute which AdSense warns about */}
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+          crossOrigin="anonymous"
+        />
+        <ins
+          className="adsbygoogle block"
+          style={{ display: "block" }}
+          data-ad-client={adClient}
+          data-ad-slot={slot}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      </div>
     </div>
   );
 }

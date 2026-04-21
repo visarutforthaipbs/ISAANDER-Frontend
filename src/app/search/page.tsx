@@ -1,31 +1,26 @@
-/* eslint-disable @next/next/no-img-element */
-import { media } from "@wix/sdk";
+import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import wixClient from "@/lib/wix-client";
-import { formatDate } from "@/lib/utils";
+import { getPostImageUrl, formatDate } from "@/lib/utils";
 import { resolveAuthor } from "@/lib/author-utils";
+import { HighlightText } from "@/components/highlight-text";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 
-export const metadata = {
-  title: "ค้นหา — The Isaander",
-  description: "ค้นหาบทความ",
-};
-
-export const dynamic = "force-dynamic";
-
-function getPostImageUrl(
-  imageString: string | undefined,
-  width: number,
-  height: number
-): string | null {
-  if (!imageString) return null;
-  try {
-    return media.getScaledToFillImageUrl(imageString, width, height, {});
-  } catch {
-    return null;
-  }
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  return {
+    title: q ? `ผลการค้นหา "${q}" — The Isaander` : "ค้นหา — The Isaander",
+    description: "ค้นหาบทความจาก The Isaander",
+    robots: q ? { index: false } : { index: true, follow: true },
+  };
 }
+
+export const revalidate = 300;
 
 async function getCategoryMap() {
   try {
@@ -40,21 +35,36 @@ async function getCategoryMap() {
   }
 }
 
-async function searchPosts(query: string) {
-  if (!query.trim()) return [];
+let _allPostsCache: Awaited<ReturnType<typeof wixClient.posts.listPosts>>["posts"] | null = null;
+let _cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getAllPostsForSearch() {
+  const now = Date.now();
+  if (_allPostsCache && now - _cacheTime < CACHE_TTL) {
+    return _allPostsCache;
+  }
   try {
     const { posts: items } = await wixClient.posts.listPosts({
-      paging: { limit: 50 },
+      paging: { limit: 100 },
     });
-    const q = query.toLowerCase();
-    return (items ?? []).filter(
-      (p) =>
-        p.title?.toLowerCase().includes(q) ||
-        p.excerpt?.toLowerCase().includes(q)
-    );
+    _allPostsCache = items ?? [];
+    _cacheTime = now;
+    return _allPostsCache;
   } catch {
     return [];
   }
+}
+
+async function searchPosts(query: string) {
+  if (!query.trim()) return [];
+  const items = await getAllPostsForSearch();
+  const q = query.toLowerCase();
+  return items.filter(
+    (p) =>
+      p.title?.toLowerCase().includes(q) ||
+      p.excerpt?.toLowerCase().includes(q)
+  );
 }
 
 export default async function SearchPage({
@@ -74,6 +84,7 @@ export default async function SearchPage({
 
       <main id="main-content" className="flex-1 pb-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
+          <h1 className="sr-only">ค้นหาบทความ</h1>
           {/* Search form */}
           <form
             action="/search"
@@ -131,11 +142,15 @@ export default async function SearchPage({
                 >
                   <div className="w-[25%] shrink-0">
                     {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={post.title ?? ""}
-                        className="rounded-md aspect-square w-full object-cover"
-                      />
+                      <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                        <Image
+                          src={imageUrl}
+                          alt={post.title ?? ""}
+                          fill
+                          sizes="(max-width: 640px) 25vw, 120px"
+                          className="object-cover"
+                        />
+                      </div>
                     ) : (
                       <div className="bg-stone-200 rounded-md aspect-square w-full" />
                     )}
@@ -147,19 +162,28 @@ export default async function SearchPage({
                       </span>
                     )}
                     <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
-                      {post.title}
+                      <HighlightText text={post.title ?? ""} query={q} />
                     </h3>
                     {post.excerpt && (
                       <p className="font-sarabun text-xs text-text-muted line-clamp-2">
-                        {post.excerpt}
+                        <HighlightText text={post.excerpt} query={q} />
                       </p>
                     )}
                     <div className="flex items-center gap-2">
-                      <img
-                        src={author.avatar}
-                        alt={author.name}
-                        className="w-4 h-4 rounded-full object-cover"
-                      />
+                      {author.avatar ? (
+                        <Image
+                          src={author.avatar}
+                          alt={author.name}
+                          width={16}
+                          height={16}
+                          unoptimized
+                          className="w-4 h-4 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center">
+                          <span className="text-[8px] text-primary font-prompt font-bold">{author.name.charAt(0)}</span>
+                        </div>
+                      )}
                       <span className="font-sarabun text-xs text-text-muted">
                         {author.name}
                       </span>

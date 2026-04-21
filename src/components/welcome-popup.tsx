@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useSyncExternalStore } from "react";
 import { X } from "lucide-react";
+import { useFocusTrap } from "@/components/focus-trap";
 
 const STORAGE_KEY = "isaander_welcome_seen";
 
@@ -25,6 +26,7 @@ function subscribe(callback: () => void) {
 export function WelcomePopup() {
   const shouldShow = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [dismissed, setDismissed] = useState(false);
+  const trapRef = useFocusTrap(shouldShow && !dismissed);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -37,10 +39,26 @@ export function WelcomePopup() {
 
   if (!shouldShow || dismissed) return null;
 
+  // Lock body scroll while popup is open
+  if (typeof document !== "undefined") {
+    document.body.style.overflow = "hidden";
+  }
+
+  const handleDismiss = () => {
+    if (typeof document !== "undefined") {
+      document.body.style.overflow = "";
+    }
+    dismiss();
+  };
+
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      onClick={dismiss}
+      onClick={handleDismiss}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="welcome-title"
     >
       <div
         className="relative bg-surface rounded-2xl shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8"
@@ -48,7 +66,7 @@ export function WelcomePopup() {
       >
         {/* Close button */}
         <button
-          onClick={dismiss}
+          onClick={handleDismiss}
           className="absolute top-3 right-3 p-1.5 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
           aria-label="ปิด"
         >
@@ -60,7 +78,7 @@ export function WelcomePopup() {
           <p className="font-prompt text-sm font-semibold text-primary mb-1">
             The Isaander
           </p>
-          <h2 className="font-prompt text-xl font-bold text-text-main leading-snug">
+          <h2 id="welcome-title" className="font-prompt text-xl font-bold text-text-main leading-snug">
             ทำไมต้องเขียนกับเรา?
           </h2>
         </div>
@@ -114,7 +132,7 @@ export function WelcomePopup() {
 
         {/* CTA */}
         <button
-          onClick={dismiss}
+          onClick={handleDismiss}
           className="w-full bg-primary text-white font-sarabun text-sm font-medium py-3 rounded-full hover:bg-primary/90 transition-colors"
         >
           เข้าใจแล้ว เริ่มอ่านเลย

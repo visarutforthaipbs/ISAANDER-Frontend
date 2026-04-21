@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
+import { useFocusTrap } from "@/components/focus-trap";
 
 export function ImageLightbox({
   src,
@@ -13,6 +14,7 @@ export function ImageLightbox({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const trapRef = useFocusTrap(open);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -49,7 +51,8 @@ export function ImageLightbox({
 
       {open && (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center bg-black/90 p-4"
+          ref={trapRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
           onClick={close}
           role="dialog"
           aria-modal="true"
@@ -58,7 +61,7 @@ export function ImageLightbox({
           <button
             type="button"
             onClick={close}
-            className="absolute top-4 right-4 z-101 w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 z-[51] w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
             aria-label="ปิด"
           >
             <X className="w-6 h-6" />

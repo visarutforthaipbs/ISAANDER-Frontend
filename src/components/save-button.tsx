@@ -79,7 +79,7 @@ export function SaveButton({ post }: SaveButtonProps) {
       console.error("Error toggling save:", error);
       // Revert optimistic update
       setIsSaved(!newSavedState);
-      alert("เกิดข้อผิดพลาดในการบันทึกบทความ");
+      // Error handled silently — UI already reverted optimistic update
     }
   };
 
@@ -93,6 +93,7 @@ export function SaveButton({ post }: SaveButtonProps) {
           : "text-text-muted hover:text-text-main hover:bg-black/5"
       }`}
       aria-label={isSaved ? "ยกเลิกการบันทึก" : "บันทึกบทความ"}
+      aria-pressed={isSaved}
       title={isSaved ? "ยกเลิกการบันทึก" : "บันทึกบทความ"}
     >
       <Bookmark 

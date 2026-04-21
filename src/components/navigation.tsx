@@ -13,13 +13,13 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         <div className="flex items-center gap-3">
           {showBack && (
-            <Link
-              href="/"
-              className="p-2 -ml-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
-              aria-label="กลับหน้าแรก"
+            <button
+              onClick={() => window.history.back()}
+              className="min-w-11 min-h-11 flex items-center justify-center -ml-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
+              aria-label="กลับหน้าก่อนหน้า"
             >
               <ArrowLeft className="w-5 h-5" />
-            </Link>
+            </button>
           )}
           <Link href="/" className="font-prompt text-xl font-bold text-primary tracking-tight">
             The Isaander
@@ -28,24 +28,24 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
         <div className="flex items-center gap-1">
           <Link
             href="/search"
-            className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
             aria-label="ค้นหา"
           >
             <Search className="w-5 h-5" />
           </Link>
-          
+
           {user ? (
             <Link
               href="/profile"
-              className="p-1 rounded-full border border-black/10 hover:border-primary/50 transition-colors"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-full border border-black/10 hover:border-primary/50 transition-colors"
               aria-label="โปรไฟล์"
             >
               {user.photoURL ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src={user.photoURL} 
-                  alt={user.displayName || "Profile"} 
-                  className="w-7 h-7 rounded-full object-cover" 
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || "Profile"}
+                  className="w-7 h-7 rounded-full object-cover"
                 />
               ) : (
                 <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-white">
@@ -56,7 +56,7 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
           ) : (
             <button
               onClick={signInWithGoogle}
-              className="p-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
               aria-label="เข้าสู่ระบบ"
             >
               <LogIn className="w-5 h-5" />

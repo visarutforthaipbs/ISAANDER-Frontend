@@ -1,13 +1,15 @@
-/* eslint-disable @next/next/no-img-element */
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
-import { DollarSign, ArrowLeft } from "lucide-react";
 import { getAuthorBySlug } from "@/data/authors";
 import { fetchWixWriters, type WixWriter } from "@/lib/author-utils";
 import wixClient from "@/lib/wix-client";
 import { getPostImageUrl, formatDate } from "@/lib/utils";
 import { MobileBottomNav } from "@/components/navigation";
 import { TipButton, HireButton } from "@/components/share-button";
+import { BackButton } from "@/components/back-button";
+import { RevenueShareCard } from "@/components/revenue-share-card";
 
 // Social icons as inline SVGs to avoid extra dependencies
 function FacebookIcon() {
@@ -69,72 +71,114 @@ const socialIcons: Record<string, { icon: React.FC; label: string }> = {
 
 // --- Data Fetching ---
 
-async function getAuthorPosts(wixMemberId: string) {
+import { getPageViews } from "@/lib/analytics";
+
+async function fetchAllPostsFromWix() {
+  const allPosts: Array<{
+    _id?: string;
+    memberId?: string | null;
+    slug?: string;
+    media?: { wixMedia?: { image?: string } };
+    title?: string;
+    excerpt?: string;
+    lastPublishedDate?: string | Date | null;
+  }> = [];
+  let offset = 0;
+  const limit = 100;
+  for (let i = 0; i < 3; i++) {
+    const { posts: items } = await wixClient.posts.listPosts({
+      paging: { limit, offset },
+    });
+    if (!items || items.length === 0) break;
+    allPosts.push(...items);
+    if (items.length < limit) break;
+    offset += limit;
+  }
+  return allPosts;
+}
+
+async function addViewCountsToPosts<T extends { _id?: string }>(posts: T[]) {
+  return Promise.all(
+    posts.map(async (post) => {
+      try {
+        const result = await wixClient.posts.getPostMetrics(post._id ?? "");
+        return { ...post, _views: result?.metrics?.views ?? 0 };
+      } catch {
+        return { ...post, _views: 0 };
+      }
+    })
+  );
+}
+
+const _getWriterPosts = async (slug: string, wixMemberId?: string) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allPosts: any[] = [];
-    let offset = 0;
-    const limit = 100;
-    for (let i = 0; i < 3; i++) {
-      const { posts: items } = await wixClient.posts.listPosts({
-        paging: { limit, offset },
+    const allPosts = await fetchAllPostsFromWix();
+
+    let filteredPosts: typeof allPosts;
+
+    if (wixMemberId) {
+      // Normal writer: filter by their Wix memberId
+      filteredPosts = allPosts.filter((p) => p.memberId === wixMemberId);
+    } else {
+      // Fallback (editorial / unassigned): posts that don't match any known writer
+      const writers = await fetchWixWriters();
+      const knownMemberIds = new Set(
+        writers.map((w) => w.wixMemberId).filter(Boolean)
+      );
+      filteredPosts = allPosts.filter((p) => {
+        if (!p.memberId) return true; // No memberId = editorial
+        return !knownMemberIds.has(p.memberId);
       });
-      if (!items || items.length === 0) break;
-      allPosts.push(...items);
-      if (items.length < limit) break;
-      offset += limit;
     }
-    const authorPosts = allPosts.filter((p) => p.memberId === wixMemberId);
 
-    // Fetch view counts for each post
-    const postsWithViews = await Promise.all(
-      authorPosts.map(async (post) => {
-        try {
-          const result = await wixClient.posts.getPostMetrics(post._id);
-          return { ...post, _views: result?.metrics?.views ?? 0 };
-        } catch {
-          return { ...post, _views: 0 };
-        }
-      })
-    );
-
-    return postsWithViews;
+    return addViewCountsToPosts(filteredPosts);
   } catch {
     return [];
   }
+};
+
+const getWriterPosts = unstable_cache(
+  _getWriterPosts,
+  ["writer-posts"],
+  { revalidate: 300 }
+);
+
+interface RevenuePeriod {
+  revenue: number;
+  views: number;
+  isReal: boolean;
+  label: string;
 }
 
-import { getPageViews } from "@/lib/analytics";
+interface WriterData {
+  writer: WixWriter;
+  posts: Awaited<ReturnType<typeof getWriterPosts>>;
+  totalViews: number;
+  overall: RevenuePeriod;
+  monthly: RevenuePeriod;
+  authorShareOverall: number;
+  authorShareMonthly: number;
+}
 
-/** Find a WixWriter by slug — tries local config first, then Wix API */
-async function findWriter(slug: string): Promise<{ 
-  writer: WixWriter; 
-  posts: Awaited<ReturnType<typeof getAuthorPosts>>; 
-  totalViews: number; 
-  revenueTHB: number; 
-  authorShareTHB: number;
-  isRealRevenue: boolean;
-} | null> {
+/** Find a writer by slug and compute their revenue (overall + monthly) */
+async function findWriter(slug: string): Promise<WriterData | null> {
   // 1. Check local config
   const localAuthor = getAuthorBySlug(slug);
 
   // 2. Fetch all writers from Wix
   const writers = await fetchWixWriters();
 
-  // 3. Match by slug (local or wix profile slug)
+  // 3. Match by slug
   let writer = writers.find((w) => w.slug === slug);
 
-  // 4. If we have a local author but no writer match, it might be the editorial account
-  if (!writer && localAuthor) {
-    // Find by wixMemberId from local config
-    if (localAuthor.wixMemberId) {
-      writer = writers.find((w) => w.wixMemberId === localAuthor.wixMemberId);
-    }
+  // 4. Fallback: match local author by wixMemberId
+  if (!writer && localAuthor?.wixMemberId) {
+    writer = writers.find((w) => w.wixMemberId === localAuthor.wixMemberId);
   }
 
   if (!writer && !localAuthor) return null;
 
-  // Use local author for basic info if writer not found from Wix
+  // Build final writer object
   const finalWriter: WixWriter = writer || {
     slug: localAuthor!.slug,
     name: localAuthor!.name,
@@ -148,37 +192,83 @@ async function findWriter(slug: string): Promise<{
     totalViews: 0,
   };
 
-  const posts = finalWriter.wixMemberId ? await getAuthorPosts(finalWriter.wixMemberId) : [];
-  const totalViews = posts.reduce((sum: number, p: { _views?: number }) => sum + (p._views ?? 0), 0);
+  // Determine wixMemberId to use for post lookup
+  const effectiveMemberId = writer?.wixMemberId || localAuthor?.wixMemberId;
+  const posts = await getWriterPosts(slug, effectiveMemberId);
+  const totalViews = posts.reduce(
+    (sum, p) => sum + ((p as { _views?: number })._views ?? 0),
+    0
+  );
   const sharePercent = finalWriter.revenueSharePercent ?? 60;
 
-  // Try to fetch real revenue from GA4
-  let revenueTHB = 0;
-  let isRealRevenue = false;
+  // Fetch revenue from GA4
+  let overall: RevenuePeriod = {
+    revenue: 0,
+    views: 0,
+    isReal: false,
+    label: "1 ปี",
+  };
+  let monthly: RevenuePeriod = {
+    revenue: 0,
+    views: 0,
+    isReal: false,
+    label: "30 วัน",
+  };
 
   if (posts.length > 0) {
-    const postPaths = posts.map(p => `/post/${p.slug}`);
-    // Fetch analytics for a long period (e.g., 365 days) to get cumulative revenue
-    const analytics = await getPageViews(postPaths, 365);
-    
-    if (analytics.totalRevenue > 0) {
-      revenueTHB = analytics.totalRevenue;
-      isRealRevenue = true;
-    } else {
-      // Fallback to estimation if no real revenue data found
-      revenueTHB = (totalViews / 1000) * 30;
+    const postPaths = posts
+      .map((p) => p.slug)
+      .filter((s): s is string => !!s)
+      .map((s) => `/post/${s}`);
+
+    try {
+      const [analyticsOverall, analyticsMonthly] = await Promise.all([
+        getPageViews(postPaths, 365),
+        getPageViews(postPaths, 30),
+      ]);
+
+      overall = {
+        revenue: analyticsOverall.totalRevenue,
+        views: analyticsOverall.totalViews,
+        isReal: true,
+        label: "1 ปี",
+      };
+      monthly = {
+        revenue: analyticsMonthly.totalRevenue,
+        views: analyticsMonthly.totalViews,
+        isReal: true,
+        label: "30 วัน",
+      };
+    } catch (error) {
+      console.error("GA4 revenue fetch failed:", error);
+      // Fallback to estimation
+      const estimated = (totalViews / 1000) * 30;
+      overall = {
+        revenue: estimated,
+        views: totalViews,
+        isReal: false,
+        label: "1 ปี",
+      };
+      monthly = {
+        revenue: estimated / 12,
+        views: Math.round(totalViews / 12),
+        isReal: false,
+        label: "30 วัน",
+      };
     }
   }
 
-  const authorShareTHB = Math.round((revenueTHB * sharePercent) / 100);
-  
-  return { 
-    writer: { ...finalWriter, postCount: posts.length, totalViews, localAuthor }, 
-    posts, 
-    totalViews, 
-    revenueTHB: Math.round(revenueTHB), 
-    authorShareTHB,
-    isRealRevenue
+  const authorShareOverall = Math.round((overall.revenue * sharePercent) / 100);
+  const authorShareMonthly = Math.round((monthly.revenue * sharePercent) / 100);
+
+  return {
+    writer: { ...finalWriter, postCount: posts.length, totalViews, localAuthor },
+    posts,
+    totalViews,
+    overall,
+    monthly,
+    authorShareOverall,
+    authorShareMonthly,
   };
 }
 
@@ -192,10 +282,26 @@ export async function generateMetadata({
   const { slug } = await params;
   const local = getAuthorBySlug(slug);
   const name = local?.name ?? decodeURIComponent(slug);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
+  const avatarUrl = local?.avatar?.startsWith("http") ? local.avatar : local?.avatar ? `${baseUrl}${local.avatar}` : undefined;
 
   return {
     title: `${name} — The Isaander`,
     description: local?.bio ?? `บทความโดย ${name}`,
+    alternates: { canonical: `${baseUrl}/author/${slug}` },
+    openGraph: {
+      title: `${name} — The Isaander`,
+      description: local?.bio ?? `บทความโดย ${name}`,
+      url: `${baseUrl}/author/${slug}`,
+      type: "profile",
+      images: avatarUrl ? [{ url: avatarUrl, width: 400, height: 400 }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} — The Isaander`,
+      description: local?.bio ?? `บทความโดย ${name}`,
+      images: avatarUrl ? [avatarUrl] : undefined,
+    },
   };
 }
 
@@ -212,7 +318,7 @@ export default async function AuthorProfilePage({
   const result = await findWriter(slug);
   if (!result) notFound();
 
-  const { writer, posts: authorPosts, totalViews, revenueTHB, authorShareTHB, isRealRevenue } = result;
+  const { writer, posts: authorPosts, totalViews, overall, monthly, authorShareOverall, authorShareMonthly } = result;
   const author = writer.localAuthor;
 
   const socialLinks = author?.socialLinks ?? writer.socialLinks ?? {};
@@ -225,13 +331,7 @@ export default async function AuthorProfilePage({
       <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="p-2 -ml-2 rounded-full text-text-muted hover:text-text-main hover:bg-black/5 transition-colors"
-              aria-label="กลับหน้าแรก"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
+            <BackButton />
             <Link
               href="/"
               className="font-prompt text-xl font-bold text-primary tracking-tight"
@@ -248,10 +348,12 @@ export default async function AuthorProfilePage({
           {/* Cover Image */}
           <div className="h-48 sm:h-64 w-full bg-gradient-to-br from-primary/20 to-secondary/20">
             {author?.coverImage && (
-              <img
+              <Image
                 src={author.coverImage}
                 alt=""
-                className="w-full h-full object-cover"
+                fill
+                unoptimized
+                className="object-cover"
               />
             )}
           </div>
@@ -263,9 +365,12 @@ export default async function AuthorProfilePage({
           <div className="relative max-w-3xl mx-auto px-4 sm:px-6 -mt-16">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               {writer.avatar ? (
-                <img
+                <Image
                   src={writer.avatar}
                   alt={writer.name}
+                  width={128}
+                  height={128}
+                  unoptimized
                   className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-background shadow-lg"
                 />
               ) : (
@@ -342,78 +447,17 @@ export default async function AuthorProfilePage({
 
         {/* Revenue Share Card */}
         {writer.revenueSharePercent && writer.postCount > 0 && (
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-6">
-            <div className="bg-surface rounded-xl border border-black/5 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-prompt font-semibold text-text-main text-sm">
-                      Revenue Share
-                    </h3>
-                    <p className="font-sarabun text-xs text-text-muted">
-                      ส่วนแบ่งรายได้จากโฆษณา
-                    </p>
-                  </div>
-                </div>
-                {isRealRevenue && (
-                  <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                    Real Data
-                  </span>
-                )}
-              </div>
-
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-black/[0.02] rounded-lg p-3 text-center">
-                  <p className="font-prompt text-lg font-bold text-text-main">
-                    {totalViews.toLocaleString()}
-                  </p>
-                  <p className="font-sarabun text-xs text-text-muted">ยอดวิวรวม</p>
-                </div>
-                <div className="bg-black/[0.02] rounded-lg p-3 text-center">
-                  <p className="font-prompt text-lg font-bold text-text-main">
-                    ฿{revenueTHB.toLocaleString()}
-                  </p>
-                  <p className="font-sarabun text-xs text-text-muted">รายได้รวม</p>
-                </div>
-                <div className="bg-primary/5 rounded-lg p-3 text-center">
-                  <p className="font-prompt text-lg font-bold text-primary">
-                    ฿{authorShareTHB.toLocaleString()}
-                  </p>
-                  <p className="font-sarabun text-xs text-text-muted">ส่วนแบ่งของคุณ</p>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="h-3 rounded-full bg-black/5 overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${writer.revenueSharePercent}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs font-sarabun text-text-muted">
-                    <span>นักเขียน {writer.revenueSharePercent}% — ฿{authorShareTHB.toLocaleString()}</span>
-                    <span>แพลตฟอร์ม {100 - writer.revenueSharePercent}% — ฿{(revenueTHB - authorShareTHB).toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="font-sarabun text-xs text-text-muted mt-3 italic">
-                {isRealRevenue 
-                  ? `* คำนวณจากรายได้ AdSense จริงย้อนหลัง 1 ปี · ${writer.postCount} บทความ`
-                  : `* ประมาณการเบื้องต้น (RPM ฿30) · ${writer.postCount} บทความ`
-                }
-              </p>
-            </div>
-          </section>
+          <RevenueShareCard
+            overall={overall}
+            monthly={monthly}
+            writer={writer}
+            authorShareOverall={authorShareOverall}
+            authorShareMonthly={authorShareMonthly}
+          />
         )}
 
         {/* Author's Posts */}
-        {authorPosts.length > 0 && (
+        {authorPosts.length > 0 ? (
           <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
             <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
               <span
@@ -438,11 +482,15 @@ export default async function AuthorProfilePage({
                   >
                     <div className="w-[25%] shrink-0">
                       {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={post.title ?? ""}
-                          className="rounded-md aspect-square w-full object-cover"
-                        />
+                        <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                          <Image
+                            src={imageUrl}
+                            alt={post.title ?? ""}
+                            fill
+                            sizes="(max-width: 640px) 25vw, 120px"
+                            className="object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-stone-200 rounded-md aspect-square w-full" />
                       )}
@@ -470,6 +518,14 @@ export default async function AuthorProfilePage({
                   </Link>
                 );
               })}
+            </div>
+          </section>
+        ) : (
+          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
+            <div className="bg-surface rounded-xl border border-black/5 shadow-sm p-10 text-center">
+              <p className="font-sarabun text-text-muted">
+                {writer.name} ยังไม่มีบทความที่เผยแพร่
+              </p>
             </div>
           </section>
         )}
