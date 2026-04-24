@@ -132,10 +132,9 @@ export default function RootLayout({
             </>
           )}
           {adsEnabled && adClient && (
-            <Script
-              id="adsense-script"
+            <script
+              async
               src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-              strategy="afterInteractive"
               crossOrigin="anonymous"
             />
           )}
