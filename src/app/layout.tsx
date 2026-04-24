@@ -70,6 +70,7 @@ export const metadata: Metadata = {
     preconnect: [
       "https://static.wixstatic.com",
       "https://www.googletagmanager.com",
+      "https://pagead2.googlesyndication.com",
     ],
   },
 };
@@ -85,6 +86,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const adsEnabled = process.env.NEXT_PUBLIC_ENABLE_ADS === "true";
+  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsMediaOrganization",
@@ -127,6 +130,14 @@ export default function RootLayout({
                 {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${gaMeasurementId}');`}
               </Script>
             </>
+          )}
+          {adsEnabled && adClient && (
+            <Script
+              id="adsense-script"
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+              strategy="afterInteractive"
+              crossOrigin="anonymous"
+            />
           )}
           {children}
         </AuthProvider>

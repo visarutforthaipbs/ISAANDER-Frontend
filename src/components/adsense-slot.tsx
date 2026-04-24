@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { useEffect } from "react";
 
 type AdSenseSlotProps = {
@@ -34,12 +33,6 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
       <p className="font-sarabun text-xs text-text-muted text-center mb-2">โฆษณา</p>
       {/* min-h prevents layout shift while ad loads */}
       <div className="min-h-[250px] flex items-center justify-center">
-        {/* Use a standard script tag to avoid Next.js data-nscript attribute which AdSense warns about */}
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-          crossOrigin="anonymous"
-        />
         <ins
           className="adsbygoogle block"
           style={{ display: "block" }}
