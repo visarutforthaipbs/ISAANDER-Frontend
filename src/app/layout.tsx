@@ -105,6 +105,7 @@ export default function RootLayout({
     <html
       lang="th"
       className={`${dbHelvethaica.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
@@ -113,6 +114,13 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {adsEnabled && adClient && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+            crossOrigin="anonymous"
+          />
+        )}
       </head>
       <body className="min-h-full flex flex-col">
         <a href="#main-content" className="skip-link">
@@ -130,13 +138,6 @@ export default function RootLayout({
                 {`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${gaMeasurementId}');`}
               </Script>
             </>
-          )}
-          {adsEnabled && adClient && (
-            <script
-              async
-              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-              crossOrigin="anonymous"
-            />
           )}
           {children}
         </AuthProvider>

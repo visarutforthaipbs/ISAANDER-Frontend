@@ -32,10 +32,10 @@ export function AdSenseSlot({ slot, className }: AdSenseSlotProps) {
     <div className={className}>
       <p className="font-sarabun text-xs text-text-muted text-center mb-2">โฆษณา</p>
       {/* min-h prevents layout shift while ad loads */}
-      <div className="min-h-[250px] flex items-center justify-center">
+      <div className="min-h-[250px] w-full text-center">
         <ins
           className="adsbygoogle block"
-          style={{ display: "block" }}
+          style={{ display: "block", width: "100%" }}
           data-ad-client={adClient}
           data-ad-slot={slot}
           data-ad-format="auto"
