@@ -7,9 +7,9 @@ const securityHeaders = {
   "X-Frame-Options": "SAMEORIGIN",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+  "Cross-Origin-Opener-Policy": "unsafe-none",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-  "Content-Security-Policy": "frame-src 'self' https://www.youtube.com https://youtube.com https://www.facebook.com https://facebook.com https://fb.watch; default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
+  "Content-Security-Policy": "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; frame-src 'self' https:; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
 };
 
 export async function middleware(request: NextRequest) {

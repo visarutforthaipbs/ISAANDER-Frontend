@@ -35,8 +35,8 @@ const authors: Author[] = [
     name: "The Isaander",
     title: "กองบรรณาธิการ",
     bio: "สำนักข่าวเชิงสืบสวนและสารคดีเชิงวัฒนธรรมแห่งภาคอีสาน — ขุดลึก เล่าจริง เพื่อคนอีสาน",
-    avatar: "/images/authors/theisaander.jpg",
-    coverImage: "/images/authors/theisaander-cover.jpg",
+    avatar: "/logo-black.svg",
+    coverImage: "/logo-black.svg",
     socialLinks: {
       facebook: "https://www.facebook.com/theisaander",
       x: "https://x.com/theisaander",
