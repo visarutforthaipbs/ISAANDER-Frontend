@@ -22,6 +22,9 @@ interface RichContentNode {
     video?: { src?: { url?: string } | null };
     thumbnail?: { src?: { url?: string } | null };
   };
+  htmlData?: {
+    html?: string;
+  };
   dividerData?: Record<string, unknown>;
   blockquoteData?: Record<string, unknown>;
   codeBlockData?: Record<string, unknown>;
@@ -294,6 +297,32 @@ function RichContentNode({ node }: { node: RichContentNode }) {
       const videoSrc = node.videoData?.video?.src?.url;
       const thumbUrl = getWixImageUrl(node.videoData?.thumbnail?.src, 800, 450);
       if (videoSrc) {
+        // Handle YouTube/Facebook/External embeds
+        const isYouTube = videoSrc.includes("youtube.com") || videoSrc.includes("youtu.be");
+        const isFacebook = videoSrc.includes("facebook.com");
+
+        if (isYouTube || isFacebook) {
+          let embedUrl = videoSrc;
+          if (isYouTube) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = videoSrc.match(regExp);
+            if (match && match[2].length === 11) {
+              embedUrl = `https://www.youtube.com/embed/${match[2]}`;
+            }
+          }
+
+          return (
+            <div className="my-6 aspect-video">
+              <iframe
+                src={embedUrl}
+                className="h-full w-full rounded-lg"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          );
+        }
+
         return (
           <div className="my-6 aspect-video">
             <video
@@ -307,6 +336,18 @@ function RichContentNode({ node }: { node: RichContentNode }) {
         );
       }
       return null;
+    }
+
+    case "HTML": {
+      if (!node.htmlData?.html) return null;
+      const html = node.htmlData.html;
+      const isVideoEmbed = html.includes("iframe") || html.includes("video") || html.includes("youtube") || html.includes("facebook");
+      return (
+        <div 
+          className={`my-6 w-full flex justify-center ${isVideoEmbed ? "aspect-video" : ""}`}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
     }
 
     case "LINK_PREVIEW": {

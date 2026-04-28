@@ -4,11 +4,12 @@ import { verifyToken, COOKIE_NAME } from "@/lib/auth";
 // Security headers applied to all responses
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
+  "X-Frame-Options": "SAMEORIGIN",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Content-Security-Policy": "frame-src 'self' https://www.youtube.com https://youtube.com https://www.facebook.com https://facebook.com https://fb.watch; default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;",
 };
 
 export async function middleware(request: NextRequest) {

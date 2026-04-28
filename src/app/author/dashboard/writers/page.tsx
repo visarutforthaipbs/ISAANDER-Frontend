@@ -211,8 +211,13 @@ export default function WritersAdminPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <Link href="/" className="font-prompt text-xl font-bold text-primary tracking-tight">
-              The Isaander
+            <Link href="/" className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-black.svg"
+                alt="The Isaander"
+                className="h-8 w-auto"
+              />
             </Link>
             <span className="text-text-muted font-sarabun text-sm hidden sm:inline">
               / จัดการนักเขียน

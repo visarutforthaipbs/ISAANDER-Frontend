@@ -74,10 +74,13 @@ export function WelcomePopup() {
         </button>
 
         {/* Header */}
-        <div className="mb-5">
-          <p className="font-prompt text-sm font-semibold text-primary mb-1">
-            The Isaander
-          </p>
+        <div className="mb-5 flex flex-col items-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-black.svg"
+            alt="The Isaander"
+            className="h-6 w-auto mb-2"
+          />
           <h2 id="welcome-title" className="font-prompt text-xl font-bold text-text-main leading-snug">
             ทำไมต้องเขียนกับเรา?
           </h2>

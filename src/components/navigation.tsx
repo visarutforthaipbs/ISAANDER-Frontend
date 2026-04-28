@@ -21,8 +21,13 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <Link href="/" className="font-prompt text-xl font-bold text-primary tracking-tight">
-            The Isaander
+          <Link href="/" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-black.svg"
+              alt="The Isaander"
+              className="h-8 w-auto"
+            />
           </Link>
         </div>
         <div className="flex items-center gap-1">
@@ -91,7 +96,7 @@ export function MobileBottomNav() {
               aria-current={active ? "page" : undefined}
               className={`flex flex-col items-center gap-1 transition-colors min-w-11 min-h-11 justify-center px-4 ${
                 active
-                  ? "text-primary"
+                  ? "text-isaander-orange"
                   : "text-text-muted hover:text-text-main"
               }`}
             >

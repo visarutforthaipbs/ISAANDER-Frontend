@@ -47,12 +47,14 @@ export default function DashboardLoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link
-            href="/"
-            className="font-prompt text-2xl font-bold text-primary"
-          >
-            The Isaander
+        <div className="flex flex-col items-center mb-8">
+          <Link href="/" className="mb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-black.svg"
+              alt="The Isaander"
+              className="h-10 w-auto"
+            />
           </Link>
           <p className="text-sm text-text-muted font-sarabun mt-2">
             เข้าสู่ระบบ Writer Dashboard

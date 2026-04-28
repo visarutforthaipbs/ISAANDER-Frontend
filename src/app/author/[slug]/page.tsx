@@ -332,11 +332,13 @@ export default async function AuthorProfilePage({
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <BackButton />
-            <Link
-              href="/"
-              className="font-prompt text-xl font-bold text-primary tracking-tight"
-            >
-              The Isaander
+            <Link href="/" className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-black.svg"
+                alt="The Isaander"
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
         </div>

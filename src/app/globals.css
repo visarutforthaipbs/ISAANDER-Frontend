@@ -1,18 +1,28 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Primary brand colors */
-  --color-primary: #C15C3D;
-  /* Darkened from #8A9A5B → passes WCAG AA (5.2:1 on white) */
-  --color-secondary: #596C37;
-  --color-background: #F9F6F0;
+  /* Main brand colors (Black and White are primary) */
+  --color-primary: #100d0c;
+  --color-secondary: #f4f1ec;
+  --color-background: #FFFFFF;
   --color-surface: #FFFFFF;
-  --color-text-main: #2D2D2D;
+  --color-text-main: #100d0c;
   --color-text-muted: #6B7280;
-  /* Accent used for badges — keep gold but pair with dark text */
-  --color-accent: #E6A845;
+  --color-accent: #fb512e; /* Orange for emphasis/call-to-action */
 
-  /* Both font tokens now point to DB Helvethaica X (local font) */
+  /* Full Isaander Brand Palette */
+  --color-isaander-black: #100d0c;
+  --color-isaander-white: #ffffff;
+  --color-isaander-orange: #fb512e;
+  --color-isaander-dark-red: #5e0203;
+  --color-isaander-gold: #af8928;
+  --color-isaander-dark-blue: #223381;
+  --color-isaander-light-blue: #9bacd8;
+  --color-isaander-yellow: #f2eb67;
+  --color-isaander-cream: #fffdde;
+  --color-isaander-offwhite: #f4f1ec;
+
+  /* Fonts point to DB Helvethaica X */
   --font-prompt: var(--font-dbhelvethaica);
   --font-sarabun: var(--font-dbhelvethaica);
 }

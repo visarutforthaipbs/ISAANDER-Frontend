@@ -91,11 +91,13 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="font-prompt text-xl font-bold text-primary tracking-tight"
-            >
-              The Isaander
+            <Link href="/" className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-black.svg"
+                alt="The Isaander"
+                className="h-8 w-auto"
+              />
             </Link>
             <span className="text-text-muted font-sarabun text-sm hidden sm:inline">
               / Writer Dashboard

@@ -87,7 +87,7 @@ function HeroDeepDive({
         {/* Content over image */}
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
           {tag && (
-            <span className="inline-block bg-accent text-text-main text-xs font-sarabun font-semibold px-3 py-1 rounded-full mb-3">
+            <span className="inline-block bg-isaander-yellow text-isaander-black text-xs font-sarabun font-semibold px-3 py-1 rounded-full mb-3 shadow-sm border border-black/5">
               {tag}
             </span>
           )}
@@ -137,7 +137,7 @@ function HistoryCarousel({
   return (
     <section aria-label="เรื่องราวในอดีต">
       <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-        <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
+        <span className="w-1 h-6 bg-isaander-gold rounded-full" aria-hidden="true" />
         เรื่องราวในอดีต / บุคคลสำคัญ
       </h2>
 
@@ -177,7 +177,7 @@ function HistoryCarousel({
               {/* Text */}
               <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                 {tag && (
-                  <span className="inline-block self-start bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-block self-start bg-isaander-offwhite border border-isaander-gold/20 text-isaander-gold text-xs font-sarabun font-medium px-2 py-0.5 rounded-full">
                     {tag}
                   </span>
                 )}
@@ -229,7 +229,7 @@ function StandardFeed({
   return (
     <section aria-label="ข่าวล่าสุด">
       <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-        <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
+        <span className="w-1 h-6 bg-isaander-orange rounded-full" aria-hidden="true" />
         ข่าวล่าสุด
       </h2>
 
@@ -269,7 +269,7 @@ function StandardFeed({
               {/* Text */}
               <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                 {tag && (
-                  <span className="inline-block self-start bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2 py-0.5 rounded-full">
+                  <span className="inline-block self-start bg-isaander-offwhite border border-isaander-orange/20 text-isaander-orange text-xs font-sarabun font-medium px-2 py-0.5 rounded-full">
                     {tag}
                   </span>
                 )}
@@ -389,7 +389,7 @@ export default async function HomePage() {
               <HeroDeepDive post={heroPost} categoryMap={categoryMap} authorMap={authorMap} />
 
               {/* Creator Platform CTA */}
-              <section className="bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 rounded-xl p-5 sm:p-6 border border-primary/15">
+              <section className="bg-gradient-to-br from-isaander-cream via-isaander-offwhite to-isaander-light-blue/20 rounded-xl p-5 sm:p-6 border border-isaander-gold/20">
                 <h2 className="font-prompt text-lg font-bold text-text-main mb-1.5">
                   เขียน · แชร์ · สร้างรายได้
                 </h2>
@@ -399,7 +399,7 @@ export default async function HomePage() {
                 <div className="flex flex-wrap gap-3">
                   <Link
                     href="/author"
-                    className="inline-flex items-center gap-2 bg-primary text-white font-sarabun text-sm font-medium px-4 py-2 rounded-full hover:bg-primary/90 transition-colors"
+                    className="inline-flex items-center gap-2 bg-isaander-black text-white font-sarabun text-sm font-medium px-4 py-2 rounded-full hover:bg-isaander-black/80 transition-colors"
                   >
                     พบนักเขียนของเรา
                   </Link>
@@ -416,7 +416,7 @@ export default async function HomePage() {
               {writers.length > 0 && (
                 <section aria-label="นักเขียนเด่น">
                   <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
+                    <span className="w-1 h-6 bg-isaander-dark-blue rounded-full" aria-hidden="true" />
                     นักเขียนเด่น
                   </h2>
                   <div className="flex flex-col gap-3">

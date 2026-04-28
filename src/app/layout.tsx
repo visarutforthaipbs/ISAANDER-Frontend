@@ -40,6 +40,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: "/logo-black.svg",
+  },
   openGraph: {
     title: "The Isaander | สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
     description: "The Isaander สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย นำเสนอข่าวเชิงลึก สังคม การเมือง และวัฒนธรรม",
@@ -94,7 +97,7 @@ export default function RootLayout({
     name: "The Isaander",
     alternateName: "The Isaander สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
     url: "https://www.theisaander.com",
-    logo: `${baseUrl}/logo.png`,
+    logo: `${baseUrl}/logo-black.svg`,
     sameAs: [
       "https://www.facebook.com/TheIsaander",
       "https://twitter.com/TheIsaander"
