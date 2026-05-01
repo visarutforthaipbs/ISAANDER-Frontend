@@ -238,8 +238,14 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "BLOCKQUOTE":
       return (
-        <blockquote className="border-l-4 border-primary/30 pl-5 pr-2 my-8 py-2">
-          <div className="font-sarabun text-lg leading-relaxed text-text-muted italic">
+        <blockquote className="relative my-12 px-6 sm:px-10 py-4 border-l-4 border-isaander-orange bg-gradient-to-r from-isaander-orange/5 to-transparent rounded-r-xl">
+          <span 
+            className="absolute top-2 left-4 text-6xl text-isaander-orange/20 font-serif leading-none select-none pointer-events-none"
+            aria-hidden="true"
+          >
+            &ldquo;
+          </span>
+          <div className="relative font-prompt text-xl sm:text-2xl font-medium leading-[1.6] text-text-main">
             {children}
           </div>
         </blockquote>
