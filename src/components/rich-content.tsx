@@ -247,14 +247,14 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "BULLETED_LIST":
       return (
-        <ul className="list-disc list-inside space-y-1 mb-4 font-sarabun text-text-main">
+        <ul className="list-disc list-outside pl-6 space-y-2 mb-6 font-sarabun text-text-main marker:text-primary">
           {children}
         </ul>
       );
 
     case "ORDERED_LIST":
       return (
-        <ol className="list-decimal list-inside space-y-1 mb-4 font-sarabun text-text-main">
+        <ol className="list-decimal list-outside pl-6 space-y-2 mb-6 font-sarabun text-text-main marker:text-primary">
           {children}
         </ol>
       );

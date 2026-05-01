@@ -184,8 +184,9 @@ export default function SavedPage() {
                   </div>
 
                   <div className="flex-1 min-w-0 pr-10 sm:pr-12">
+                    {/* Signal 39: Layer 1 Contrast Fix */}
                     {post.categoryLabel && (
-                      <span className="bg-secondary/15 text-secondary text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block mb-1.5 sm:mb-2">
+                      <span className="bg-surface border border-black/10 text-text-muted text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block mb-1.5 sm:mb-2">
                         {post.categoryLabel}
                       </span>
                     )}

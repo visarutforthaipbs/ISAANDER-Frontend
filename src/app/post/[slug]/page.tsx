@@ -272,10 +272,13 @@ export default async function PostPage({
           </div>
 
           {/* Excerpt */}
+          {/* Signal 39: Layer 3 - Lead with highest-Surprisal finding. Increased size and whitespace. */}
           {post.excerpt && (
-            <p className="font-sarabun text-lg text-text-muted leading-relaxed mb-6 border-l-4 border-primary/30 pl-4">
-              {post.excerpt}
-            </p>
+            <div className="my-10">
+              <p className="font-sarabun text-xl text-text-main font-medium leading-relaxed border-l-4 border-primary pl-5 py-1">
+                {post.excerpt}
+              </p>
+            </div>
           )}
 
           {inArticleAdSlot && (
@@ -306,8 +309,9 @@ export default async function PostPage({
         </article>
 
         {/* End-of-article share CTA */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
-          <div className="border-t border-black/10 pt-8 flex flex-col items-center gap-3 text-center">
+        {/* Signal 39: Breath Rule - Insert 3-5 seconds of low-bitrate space after major insights */}
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16">
+          <div className="border-t border-black/10 pt-10 flex flex-col items-center gap-3 text-center">
             <p className="font-prompt font-semibold text-text-main">
               อ่านจบแล้ว — แชร์บทความนี้
             </p>
@@ -331,8 +335,8 @@ export default async function PostPage({
 
         {/* Related Posts */}
         {related.length > 0 && (
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-12">
-            <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
+          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 mb-8">
+            <h2 className="font-prompt text-lg font-semibold text-text-main mb-6 flex items-center gap-2">
               <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
               บทความที่เกี่ยวข้อง
             </h2>

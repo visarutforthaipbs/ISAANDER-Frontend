@@ -67,18 +67,20 @@ export default async function ExplorePage() {
       <StickyHeader />
 
       <main id="main-content" className="flex-1 pb-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
-          <h1 className="font-prompt text-2xl font-bold text-text-main mb-6">
-            สำรวจหมวดหมู่
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
+          {/* Signal 39: Layer 3 - Delete obvious titles, use high-surprisal framing. */}
+          <h1 className="font-prompt text-2xl sm:text-3xl font-bold text-text-main mb-6">
+            ค้นพบเรื่องราวที่สนใจ
           </h1>
 
           {/* Category pills */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          {/* Signal 39: Layer 1 - High contrast color encoding. */}
+          <div className="flex flex-wrap gap-3 mb-10">
             {nonEmpty.map(({ category }) => (
               <a
                 key={category._id}
                 href={`#cat-${category._id}`}
-                className="px-4 py-2 rounded-full bg-secondary/15 text-secondary font-sarabun text-sm font-medium hover:bg-secondary/25 transition-colors"
+                className="px-4 py-2 rounded-full bg-surface border border-black/10 text-text-main font-sarabun text-sm font-medium hover:border-isaander-orange hover:text-isaander-orange transition-colors shadow-sm"
               >
                 {category.label}
               </a>
@@ -87,15 +89,16 @@ export default async function ExplorePage() {
         </div>
 
         {/* Category sections */}
+        {/* Signal 39: Breath Rule - Generous vertical space between distinct categories */}
         {nonEmpty.map(({ category, posts }) => (
           <section
             key={category._id}
             id={`cat-${category._id}`}
-            className="mb-10"
+            className="mb-16 scroll-mt-24"
           >
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
-              <h2 className="font-prompt text-lg font-semibold text-text-main mb-4 flex items-center gap-2">
-                <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
+              <h2 className="font-prompt text-xl font-semibold text-text-main mb-6 flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-isaander-orange rounded-full" aria-hidden="true" />
                 {category.label}
               </h2>
             </div>

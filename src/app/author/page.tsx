@@ -20,12 +20,13 @@ export default async function AuthorsPage() {
       <main id="main-content" className="flex-1 pb-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="font-prompt text-2xl font-bold text-text-main">
-              ทีมผู้เขียน
+          {/* Signal 39: Layer 3 - High-surprisal framing. */}
+          <div className="mb-12">
+            <h1 className="font-prompt text-2xl sm:text-3xl font-bold text-text-main">
+              ผู้เล่าเรื่องแห่งอีสาน
             </h1>
             <p className="font-sarabun text-base text-text-muted mt-2">
-              นักข่าว นักเขียน & ผู้เชี่ยวชาญของ The Isaander
+              ทำความรู้จักนักข่าว นักเขียน และผู้เชี่ยวชาญตัวจริงเบื้องหลังผลงานของเรา
             </p>
           </div>
 
@@ -66,12 +67,13 @@ export default async function AuthorsPage() {
                         {writer.postCount} บทความ
                       </p>
                       {/* Expertise badges */}
+                      {/* Signal 39: Layer 1 - Contrast / Chunked gateway. Fixed invisible text-secondary */}
                       {expertise && expertise.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {expertise.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className="bg-secondary/10 text-secondary text-xs font-sarabun px-2 py-0.5 rounded-full"
+                              className="bg-surface border border-isaander-gold/30 text-isaander-gold text-xs font-sarabun px-2 py-0.5 rounded-full"
                             >
                               {tag}
                             </span>
@@ -81,10 +83,10 @@ export default async function AuthorsPage() {
                       {/* Category badges from posts */}
                       {writer.categories.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {writer.categories.slice(0, 4).map((cat) => (
+                          {writer.categories.slice(0, 3).map((cat) => (
                             <span
                               key={cat}
-                              className="bg-secondary/15 text-secondary text-xs font-sarabun px-2 py-0.5 rounded-full"
+                              className="bg-surface border border-black/10 text-text-muted text-xs font-sarabun px-2 py-0.5 rounded-full"
                             >
                               {cat}
                             </span>

@@ -385,18 +385,20 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4">
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-10 lg:items-start">
             {/* Main column: hero + carousel */}
-            <div className="min-w-0 flex flex-col gap-8">
+            {/* Signal 39: Breath Rule — Generous whitespace between major insights */}
+            <div className="min-w-0 flex flex-col gap-16">
               <HeroDeepDive post={heroPost} categoryMap={categoryMap} authorMap={authorMap} />
 
               {/* Creator Platform CTA */}
-              <section className="bg-gradient-to-br from-isaander-cream via-isaander-offwhite to-isaander-light-blue/20 rounded-xl p-5 sm:p-6 border border-isaander-gold/20">
-                <h2 className="font-prompt text-lg font-bold text-text-main mb-1.5">
-                  เขียน · แชร์ · สร้างรายได้
+              {/* Signal 39: Layer 3 — Strip content to the single most impactful fact. */}
+              <section className="bg-gradient-to-br from-isaander-cream via-isaander-offwhite to-isaander-light-blue/20 rounded-xl p-6 sm:p-8 border border-isaander-gold/20 text-center">
+                <h2 className="font-prompt text-xl font-bold text-text-main mb-2">
+                  บอกเล่ามุมมองของคนต่างจังหวัด
                 </h2>
-                <p className="font-sarabun text-sm text-text-muted leading-relaxed mb-4">
-                  The Isaander เป็นแพลตฟอร์มสำหรับนักเขียนอีสาน ทุกบทความของคุณสร้างรายได้จริง ผ่านระบบแบ่งรายได้ที่โปร่งใส
+                <p className="font-sarabun text-sm text-text-muted mb-6 max-w-sm mx-auto">
+                  แพลตฟอร์มสำหรับนักเขียนนอกกรุงเทพ ทุกยอดอ่านสร้างรายได้ 
                 </p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap justify-center gap-3">
                   <Link
                     href="/author"
                     className="inline-flex items-center gap-2 bg-isaander-black text-white font-sarabun text-sm font-medium px-4 py-2 rounded-full hover:bg-isaander-black/80 transition-colors"

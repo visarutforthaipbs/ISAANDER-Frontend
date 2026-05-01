@@ -70,6 +70,11 @@ body {
   margin-top: 0;
 }
 
+.rich-content li > p {
+  margin-bottom: 0;
+  display: inline;
+}
+
 .rich-content a {
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;

@@ -76,10 +76,10 @@ export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
 export function MobileBottomNav() {
   const pathname = usePathname();
 
+  // Signal 39: Layer 2 Chunked Gateway — Max 3 primary navigation items
   const navItems = [
     { icon: Home, label: "หน้าแรก", href: "/" },
     { icon: Compass, label: "สำรวจ", href: "/explore" },
-    { icon: Users, label: "นักเขียน", href: "/author" },
     { icon: Bookmark, label: "บันทึก", href: "/saved" },
   ];
 

@@ -115,20 +115,13 @@ export function WelcomePopup() {
               คุณจะได้รับเงินสนับสนุน (ทิป) จากผู้อ่านผ่านระบบพร้อมเพย์ (PromptPay) ไปเลยเต็มจำนวน <strong className="text-primary">100%</strong>
             </p>
           </li>
+          {/* Signal 39: Layer 2 - Rule of Three. Combined points 3 & 4. Fixed contrast. */}
           <li className="flex gap-3">
-            <span className="shrink-0 w-7 h-7 rounded-full bg-secondary/15 text-secondary font-prompt text-sm font-bold flex items-center justify-center">
+            <span className="shrink-0 w-7 h-7 rounded-full bg-isaander-orange/15 text-isaander-orange font-prompt text-sm font-bold flex items-center justify-center">
               3
             </span>
             <p className="font-sarabun text-sm text-text-main leading-relaxed">
-              เราจะมอบเครื่องหมายรับรองสถานะ &lsquo;ผู้เชี่ยวชาญด้านอีสาน&rsquo; (Isaan Expert) ให้กับคุณบนแพลตฟอร์มของเรา
-            </p>
-          </li>
-          <li className="flex gap-3">
-            <span className="shrink-0 w-7 h-7 rounded-full bg-secondary/15 text-secondary font-prompt text-sm font-bold flex items-center justify-center">
-              4
-            </span>
-            <p className="font-sarabun text-sm text-text-main leading-relaxed">
-              เมื่อมีแบรนด์หรือองค์กร (NGOs) ติดต่อเข้ามาเพื่อค้นหาที่ปรึกษาในสายงานที่คุณเชี่ยวชาญ เราจะเป็นตัวกลางช่วยประสานงานและเจรจาธุรกิจให้กับคุณ
+              รับตราประทับ &lsquo;ผู้เชี่ยวชาญด้านอีสาน&rsquo; และรับโอกาสเชื่อมต่อกับแบรนด์หรือองค์กร (NGOs) ที่ต้องการที่ปรึกษาในสายงานของคุณ
             </p>
           </li>
         </ol>
