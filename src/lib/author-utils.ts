@@ -18,6 +18,23 @@ interface PostLike {
   memberId?: string | null;
 }
 
+const FALLBACK_AVATARS = [
+  "/SVG/ano-author-1.svg",
+  "/SVG/ano-author-2.svg",
+  "/SVG/ano-author-3.svg",
+  "/SVG/ano-author.svg",
+];
+
+function getFallbackAvatar(identifier: string): string {
+  if (!identifier) return FALLBACK_AVATARS[0];
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % FALLBACK_AVATARS.length;
+  return FALLBACK_AVATARS[index];
+}
+
 /**
  * Resolve the author for a given Wix post.
  * 1. Try to match post.memberId to a local author config entry
@@ -117,12 +134,15 @@ export const resolveAuthorAsync = unstable_cache(
         ...base,
         slug,
         name,
-        avatar: photo || localMatch?.avatar || base.avatar,
+        avatar: photo || localMatch?.avatar || getFallbackAvatar(memberId),
       };
     } catch {
       const fallback = localMatch || getDefaultAuthor();
       memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
-      return fallback;
+      return {
+        ...fallback,
+        avatar: localMatch?.avatar || getFallbackAvatar(memberId),
+      };
     }
   },
   ["resolve-author"],
@@ -290,8 +310,7 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
         member?.profile?.slug ??
         memberId.slice(0, 8);
       const avatar =
-        (merged?.avatar || member?.profile?.photo?.url) ??
-        "";
+        merged?.avatar || member?.profile?.photo?.url || getFallbackAvatar(memberId);
       const title = merged?.title ?? member?.profile?.title ?? "นักเขียน";
       const bio = merged?.bio ?? "";
 
@@ -338,7 +357,7 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
         name: local?.name ?? "นักเขียน",
         title: local?.title ?? "นักเขียน",
         bio: local?.bio ?? "",
-        avatar: local?.avatar ?? "",
+        avatar: local?.avatar || getFallbackAvatar(memberId),
         postCount,
         wixMemberId: memberId,
         hireEmail: fsMeta?.hireEmail ?? local?.hireEmail,

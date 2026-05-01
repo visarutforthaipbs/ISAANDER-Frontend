@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "/logo-black.svg",
+    icon: "/SVG/favicon-new.svg",
   },
   openGraph: {
     title: "The Isaander | สำนักข่าวโดยคนอีสานเพื่อคนอีสานและคนที่ใช้ภาษาไทย",
