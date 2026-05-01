@@ -396,7 +396,7 @@ export default async function HomePage() {
                   บอกเล่ามุมมองของคนต่างจังหวัด
                 </h2>
                 <p className="font-sarabun text-sm text-text-muted mb-6 max-w-sm mx-auto">
-                  แพลตฟอร์มสำหรับนักเขียนนอกกรุงเทพ ทุกยอดอ่านสร้างรายได้ 
+                  แพลตฟอร์มสำหรับนักเขียนนอกกรุงเทพ ร่วมสนับสนุนมุมมองจากบ้านคุณ
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link
