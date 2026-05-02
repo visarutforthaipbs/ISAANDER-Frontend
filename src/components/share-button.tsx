@@ -53,7 +53,7 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 bg-secondary/10 text-secondary border border-secondary/30 font-prompt font-semibold px-5 py-2.5 rounded-full hover:bg-secondary/20 transition-all shadow-sm"
+        className="inline-flex items-center gap-2 bg-secondary text-text-main border border-black/10 font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-95 transition-all shadow-sm"
       >
         🍲 เลี้ยงลาบนักเขียน
       </button>
