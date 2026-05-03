@@ -124,7 +124,12 @@ export const resolveAuthorAsync = unstable_cache(
       const name = fsMeta?.promptPayName || localMatch?.name || wixName || "นักเขียน";
 
       const photo = member?.profile?.photo?.url ?? "";
-      const slug = localMatch?.slug || member?.profile?.slug || memberId;
+      // Slug priority: local config → Firestore writer doc id → full memberId.
+      // We deliberately AVOID `member.profile.slug` because Wix profile slugs
+      // are not guaranteed unique across members on a multi-author site
+      // (e.g. multiple contributors can share the site's public profile slug),
+      // which caused author bylines to incorrectly link to /author/theisaander.
+      const slug = localMatch?.slug || firestoreMeta?.slug || memberId;
 
       const resolved = { name, avatar: photo };
       memberAvatarCache.set(memberId, resolved);
@@ -137,11 +142,32 @@ export const resolveAuthorAsync = unstable_cache(
         avatar: photo || localMatch?.avatar || getFallbackAvatar(memberId),
       };
     } catch {
-      const fallback = localMatch || getDefaultAuthor();
-      memberAvatarCache.set(memberId, { name: fallback.name, avatar: "" });
+      // No localMatch + Wix member fetch failed. Don't fall back to the
+      // editorial default identity (it would mis-attribute the post). Use
+      // the memberId as the slug so the byline still links to a stable
+      // per-writer URL, and overlay any Firestore metadata we already have.
+      if (localMatch) {
+        memberAvatarCache.set(memberId, { name: localMatch.name, avatar: "" });
+        return {
+          ...localMatch,
+          avatar: localMatch.avatar || getFallbackAvatar(memberId),
+        };
+      }
+      const editorial = getDefaultAuthor();
+      const name = firestoreMeta?.promptPayName || "นักเขียน";
+      memberAvatarCache.set(memberId, { name, avatar: "" });
       return {
-        ...fallback,
-        avatar: localMatch?.avatar || getFallbackAvatar(memberId),
+        ...editorial,
+        slug: firestoreMeta?.slug || memberId,
+        name,
+        avatar: getFallbackAvatar(memberId),
+        promptPayId: firestoreMeta?.promptPayId,
+        promptPayName: firestoreMeta?.promptPayName,
+        hireEmail: firestoreMeta?.hireEmail,
+        buyMeCoffeeUrl: firestoreMeta?.buyMeCoffeeUrl,
+        revenueSharePercent: firestoreMeta?.revenueSharePercent ?? editorial.revenueSharePercent,
+        socialLinks: firestoreMeta?.socialLinks ?? {},
+        expertise: firestoreMeta?.expertise,
       };
     }
   },
@@ -305,10 +331,16 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
         "นักเขียน";
       const lastName = member?.contact?.lastName ?? "";
       const displayName = merged?.name ?? (lastName ? `${name} ${lastName}` : name);
+      // Slug priority: local config → Firestore writer doc id → full memberId.
+      // Avoid `member.profile.slug` (can collide across Wix members — see
+      // resolveAuthorAsync for context).
+      const fsMetaForSlug =
+        firestoreMap.get(`wix:${memberId}`) ??
+        (merged ? firestoreMap.get(merged.slug) : undefined);
       const slug =
         merged?.slug ??
-        member?.profile?.slug ??
-        memberId.slice(0, 8);
+        fsMetaForSlug?.slug ??
+        memberId;
       const avatar =
         merged?.avatar || member?.profile?.photo?.url || getFallbackAvatar(memberId);
       const title = merged?.title ?? member?.profile?.title ?? "นักเขียน";
@@ -349,8 +381,10 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
         : [];
 
       // Member lookup failed — use Firestore > local config > minimal fallback
-      const fallbackSlug = local?.slug ?? memberId.slice(0, 8);
-      const fsMeta = firestoreMap.get(fallbackSlug) ?? firestoreMap.get(`wix:${memberId}`);
+      const fsMetaFallback = firestoreMap.get(`wix:${memberId}`);
+      const fallbackSlug =
+        local?.slug ?? fsMetaFallback?.slug ?? memberId;
+      const fsMeta = firestoreMap.get(fallbackSlug) ?? fsMetaFallback;
 
       writers.push({
         slug: fallbackSlug,
