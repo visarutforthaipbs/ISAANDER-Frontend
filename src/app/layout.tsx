@@ -113,8 +113,9 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#C15C3D" />
-        <Script
-          id="json-ld"
+      </head>
+      <body className="min-h-full flex flex-col">
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
@@ -127,8 +128,6 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
         )}
-      </head>
-      <body className="min-h-full flex flex-col">
         <a href="#main-content" className="skip-link">
           ข้ามไปยังเนื้อหาหลัก
         </a>
