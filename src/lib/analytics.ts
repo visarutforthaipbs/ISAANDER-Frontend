@@ -91,13 +91,37 @@ export async function getPageViews(
       limit: 100,
     });
 
-    const pages: PageViewData[] = (response.rows ?? []).map((row) => ({
-      path: row.dimensionValues?.[0]?.value ?? "",
-      pageTitle: row.dimensionValues?.[1]?.value ?? "",
-      views: parseInt(row.metricValues?.[0]?.value ?? "0", 10),
-      revenue: parseFloat(row.metricValues?.[1]?.value ?? "0"),
-      impressions: parseInt(row.metricValues?.[2]?.value ?? "0", 10),
-    }));
+    const aggregatedPages = new Map<string, PageViewData>();
+
+    for (const row of response.rows ?? []) {
+      const fullPath = row.dimensionValues?.[0]?.value ?? "";
+      // Normalize path by removing query parameters
+      const path = fullPath.split("?")[0];
+      const pageTitle = row.dimensionValues?.[1]?.value ?? "";
+      const views = parseInt(row.metricValues?.[0]?.value ?? "0", 10);
+      const revenue = parseFloat(row.metricValues?.[1]?.value ?? "0");
+      const impressions = parseInt(row.metricValues?.[2]?.value ?? "0", 10);
+
+      const existing = aggregatedPages.get(path);
+      if (existing) {
+        existing.views += views;
+        existing.revenue += revenue;
+        existing.impressions += impressions;
+        // Keep the first title or could try to find the "best" one
+      } else {
+        aggregatedPages.set(path, {
+          path,
+          pageTitle,
+          views,
+          revenue,
+          impressions,
+        });
+      }
+    }
+
+    const pages = Array.from(aggregatedPages.values()).sort(
+      (a, b) => b.views - a.views
+    );
 
     const totalViews = pages.reduce((sum, p) => sum + p.views, 0);
     const totalRevenue = pages.reduce((sum, p) => sum + p.revenue, 0);
