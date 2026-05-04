@@ -79,6 +79,8 @@ export function WelcomePopup() {
           <img
             src="/logo-black.svg"
             alt="The Isaander"
+            width={87}
+            height={24}
             className="h-6 w-auto mb-2"
           />
           <h2 id="welcome-title" className="font-prompt text-xl font-bold text-text-main leading-snug">

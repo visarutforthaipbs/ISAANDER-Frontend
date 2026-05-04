@@ -6,7 +6,7 @@ import { resolveAuthorAsync, fetchWixWriters } from "@/lib/author-utils";
 
 type AuthorMap = Map<string, { name: string; avatar: string }>;
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
-import { WelcomePopup } from "@/components/welcome-popup";
+import { WelcomePopupLoader } from "@/components/welcome-popup-loader";
 import { LoginCta } from "@/components/login-cta";
 
 // --- Data Fetching ---
@@ -358,7 +358,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <WelcomePopup />
+      <WelcomePopupLoader />
       <StickyHeader />
       <main id="main-content" className="flex-1 pb-28">
         {/* Error fallback */}
@@ -396,7 +396,9 @@ export default async function HomePage() {
                   บอกเล่ามุมมองของคนต่างจังหวัด
                 </h2>
                 <p className="font-sarabun text-sm text-text-muted mb-6 max-w-sm mx-auto">
-                  แพลตฟอร์มสำหรับนักเขียนนอกกรุงเทพ ร่วมสนับสนุนมุมมองจากบ้านคุณ
+                  แพลตฟอร์มสำหรับนักเขียนนอกกรุงเทพ
+                  <br />
+                  ร่วมสนับสนุนมุมมองจากบ้านคุณ
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link

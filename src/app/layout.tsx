@@ -5,6 +5,10 @@ import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
 import { PageLoading } from "@/components/page-loading";
 
+// `display: "optional"` eliminates font-swap CLS — the browser uses the
+// fallback if the custom font isn't ready within ~100ms (no late swap).
+// Tuned fallback metrics keep the fallback close in size so even when the
+// custom font does paint, the shift is negligible.
 const dbHelvethaica = localFont({
   src: [
     {
@@ -24,7 +28,9 @@ const dbHelvethaica = localFont({
     },
   ],
   variable: "--font-dbhelvethaica",
-  display: "swap",
+  display: "optional",
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Tahoma", "sans-serif"],
+  preload: true,
 });
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
@@ -74,13 +80,6 @@ export const metadata: Metadata = {
   verification: {
     google: googleSiteVerification,
   },
-  other: {
-    preconnect: [
-      "https://static.wixstatic.com",
-      "https://www.googletagmanager.com",
-      "https://pagead2.googlesyndication.com",
-    ],
-  },
 };
 
 export const viewport = {
@@ -94,8 +93,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-  const adsEnabled = process.env.NEXT_PUBLIC_ENABLE_ADS === "true";
-  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsMediaOrganization",
@@ -118,13 +115,16 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#C15C3D" />
-        {adsEnabled && adClient && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-            crossOrigin="anonymous"
-          />
+        {/* Preconnect to image CDN early so LCP image starts downloading sooner */}
+        <link rel="preconnect" href="https://static.wixstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://static.wixstatic.com" />
+        {gaMeasurementId && (
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         )}
+        {/* AdSense script is NOT loaded eagerly here — `AdSenseSlot` injects
+            it lazily via IntersectionObserver only when an ad scrolls near
+            the viewport. This keeps ~180 KiB of unused JS off the critical
+            path on every page. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
