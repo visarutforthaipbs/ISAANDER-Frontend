@@ -29,6 +29,8 @@ const dbHelvethaica = localFont({
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
 const defaultOgImage = `${baseUrl}/og-default.jpg`;
+const googleSiteVerification =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "googlee22f68b0780441e3";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -70,7 +72,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google: googleSiteVerification,
   },
   other: {
     preconnect: [
