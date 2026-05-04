@@ -348,7 +348,7 @@ export default async function AuthorProfilePage({
         {/* Hero Section */}
         <div className="relative">
           {/* Cover Image */}
-          <div className="h-48 sm:h-64 w-full bg-gradient-to-br from-primary/20 to-secondary/20">
+          <div className="relative h-48 sm:h-64 w-full bg-gradient-to-br from-primary/20 to-secondary/20">
             {author?.coverImage && (
               <Image
                 src={author.coverImage}

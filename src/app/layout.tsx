@@ -118,21 +118,19 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#C15C3D" />
-      </head>
-      <body className="min-h-full flex flex-col">
+        {adsEnabled && adClient && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
+            crossOrigin="anonymous"
+          />
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {adsEnabled && adClient && (
-          <Script
-            id="adsense"
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
+      </head>
+      <body className="min-h-full flex flex-col">
         <a href="#main-content" className="skip-link">
           ข้ามไปยังเนื้อหาหลัก
         </a>

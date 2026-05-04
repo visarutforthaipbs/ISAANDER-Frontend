@@ -101,6 +101,7 @@ export const resolveAuthorAsync = unstable_cache(
       const base = localMatch || getDefaultAuthor();
       return {
         ...base,
+        slug: localMatch?.slug || firestoreMeta?.slug || memberId,
         name: cached.name || base.name,
         avatar: cached.avatar || base.avatar,
       };
