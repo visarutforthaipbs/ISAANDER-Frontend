@@ -135,10 +135,15 @@ export const resolveAuthorAsync = unstable_cache(
       memberAvatarCache.set(memberId, resolved);
 
       const base = localMatch || getDefaultAuthor();
+      // Title priority: localMatch.title → Wix profile.title → generic "นักเขียน".
+      // We deliberately avoid inheriting the editorial default title
+      // ("กองบรรณาธิการ") when this post is NOT by the editorial team.
+      const title = localMatch?.title || member?.profile?.title || "นักเขียน";
       return {
         ...base,
         slug,
         name,
+        title,
         avatar: photo || localMatch?.avatar || getFallbackAvatar(memberId),
       };
     } catch {
@@ -160,6 +165,7 @@ export const resolveAuthorAsync = unstable_cache(
         ...editorial,
         slug: firestoreMeta?.slug || memberId,
         name,
+        title: "นักเขียน",
         avatar: getFallbackAvatar(memberId),
         promptPayId: firestoreMeta?.promptPayId,
         promptPayName: firestoreMeta?.promptPayName,

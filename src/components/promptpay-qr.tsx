@@ -7,11 +7,12 @@ import generatePayload from "promptpay-qr";
 interface PromptPayQRProps {
   promptPayId: string;
   promptPayName?: string;
+  goldenTheme?: boolean;
 }
 
 const PRESET_AMOUNTS = [20, 50, 100];
 
-export function PromptPayQR({ promptPayId, promptPayName }: PromptPayQRProps) {
+export function PromptPayQR({ promptPayId, promptPayName, goldenTheme }: PromptPayQRProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
@@ -34,38 +35,43 @@ export function PromptPayQR({ promptPayId, promptPayName }: PromptPayQRProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* QR Code */}
       {qrDataUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={qrDataUrl}
-          alt="PromptPay QR Code"
-          className="w-48 h-48 rounded-lg border border-black/10"
-        />
+        <div className="bg-white rounded-xl p-3 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrDataUrl}
+            alt="PromptPay QR Code"
+            className="w-52 h-52 rounded-md"
+          />
+        </div>
       ) : (
-        <div className="w-48 h-48 rounded-lg border border-black/10 bg-stone-100 flex items-center justify-center text-text-muted text-sm">
-          กำลังสร้าง QR...
+        <div className="bg-white rounded-xl p-3 shadow-sm">
+          <div className="w-52 h-52 rounded-md bg-stone-100 flex items-center justify-center text-text-muted text-sm">
+            กำลังสร้าง QR...
+          </div>
         </div>
       )}
 
-      {/* Label */}
-      <p className="text-sm text-text-muted font-sarabun">
+      <p className={`text-sm font-sarabun ${goldenTheme ? "text-stone-900" : "text-text-muted"}`}>
         สแกนจ่ายผ่าน PromptPay
       </p>
-      {promptPayName && (
+      {promptPayName && !goldenTheme && (
         <p className="text-xs text-text-muted font-sarabun">
           ชื่อบัญชี: {promptPayName}
         </p>
       )}
 
-      {/* Preset amount buttons */}
       <div className="flex gap-2 mt-1">
         <button
           onClick={() => setSelectedAmount(null)}
           className={`px-3 py-1.5 text-sm font-sarabun rounded-full border transition-colors ${
             selectedAmount === null
-              ? "bg-primary text-white border-primary"
-              : "bg-white text-text-main border-black/15 hover:border-primary/50"
+              ? goldenTheme
+                ? "bg-stone-900 text-white border-stone-900"
+                : "bg-primary text-white border-primary"
+              : goldenTheme
+                ? "bg-white/80 text-stone-900 border-white/50 hover:bg-white"
+                : "bg-white text-text-main border-black/15 hover:border-primary/50"
           }`}
         >
           ไม่ระบุ
@@ -76,11 +82,15 @@ export function PromptPayQR({ promptPayId, promptPayName }: PromptPayQRProps) {
             onClick={() => setSelectedAmount(amount)}
             className={`px-3 py-1.5 text-sm font-sarabun rounded-full border transition-colors ${
               selectedAmount === amount
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-text-main border-black/15 hover:border-primary/50"
+                ? goldenTheme
+                  ? "bg-stone-900 text-white border-stone-900"
+                  : "bg-primary text-white border-primary"
+                : goldenTheme
+                  ? "bg-white/80 text-stone-900 border-white/50 hover:bg-white"
+                  : "bg-white text-text-main border-black/15 hover:border-primary/50"
             }`}
           >
-            ฿{amount}
+            {goldenTheme ? `${amount}B` : `฿${amount}`}
           </button>
         ))}
       </div>

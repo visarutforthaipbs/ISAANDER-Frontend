@@ -68,30 +68,38 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
           aria-labelledby="tip-title"
         >
           <div
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+            className="relative rounded-2xl shadow-2xl w-full max-w-sm p-6"
+            style={{ backgroundColor: "#C5A84A" }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               aria-label="ปิด"
               onClick={() => setOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-black/5 text-text-muted hover:text-text-main transition-colors"
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/10 text-stone-800/70 hover:text-stone-900 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="text-center mb-4">
-              <h2 id="tip-title" className="font-prompt font-bold text-xl text-text-main">
-                🍲 เลี้ยงลาบนักเขียน
-              </h2>
-              <p className="font-sarabun text-sm text-text-muted mt-1">
-                สนับสนุน{writerName} โดยตรง 100%
-              </p>
+            {/* Title */}
+            <h2 id="tip-title" className="font-prompt font-bold text-2xl text-stone-900 text-center mb-2">
+              เลี้ยงลาบนักเขียน
+            </h2>
+
+            {/* Illustration */}
+            <div className="flex justify-center mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/SVG/lab-donate.svg" alt="ลาบ" className="w-24 h-24 object-contain" />
             </div>
 
-            <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} />
+            {/* Subtitle */}
+            <p className="font-sarabun text-sm text-stone-900 text-center mb-5">
+              สนับสนุน{writerName} โดยตรง 100%
+            </p>
 
-            <p className="text-center font-sarabun text-xs text-text-muted mt-4">
+            <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} goldenTheme />
+
+            <p className="text-center font-sarabun text-xs text-stone-800/60 mt-3">
               ขอบคุณสนับสนุนนักเขียนจากใจ 🙏
             </p>
           </div>
