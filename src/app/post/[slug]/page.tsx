@@ -271,15 +271,7 @@ export default async function PostPage({
             </div>
           </div>
 
-          {/* Excerpt */}
-          {/* Signal 39: Layer 3 - Lead with highest-Surprisal finding. Increased size and whitespace. */}
-          {post.excerpt && (
-            <div className="my-10">
-              <p className="font-sarabun text-xl text-text-main font-medium leading-relaxed border-l-4 border-primary pl-5 py-1">
-                {post.excerpt}
-              </p>
-            </div>
-          )}
+
 
           {inArticleAdSlot && (
             <AdSenseSlot

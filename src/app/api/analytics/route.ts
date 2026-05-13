@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const days = parseInt(searchParams.get("days") ?? "30", 10);
+  const parsedDays = parseInt(searchParams.get("days") ?? "30", 10);
+  const days = Number.isFinite(parsedDays)
+    ? Math.min(90, Math.max(1, parsedDays))
+    : 30;
 
   // Get author's posts from Wix
   let postSlugs: string[] = [];

@@ -2,10 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { getAuthorByEmail } from "@/data/authors";
 import { createToken, COOKIE_NAME } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || "unknown";
+
+    const limiter = checkRateLimit(`${ip}:${email || "anonymous"}`, {
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+    });
+    if (!limiter.allowed) {
+      return NextResponse.json(
+        { error: "ลองใหม่อีกครั้งในภายหลัง" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(limiter.retryAfterSeconds),
+          },
+        }
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(

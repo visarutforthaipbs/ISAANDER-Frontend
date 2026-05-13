@@ -121,6 +121,25 @@ function isSafeUrl(url: string): boolean {
   }
 }
 
+function getSafeEmbedUrl(html: string): string | null {
+  const srcMatch = html.match(/<iframe[^>]*\ssrc=["']([^"']+)["'][^>]*>/i);
+  if (!srcMatch?.[1] || !isSafeUrl(srcMatch[1])) return null;
+
+  try {
+    const parsed = new URL(srcMatch[1]);
+    const host = parsed.hostname.toLowerCase();
+    const isTrustedHost =
+      host.endsWith("youtube.com") ||
+      host === "youtu.be" ||
+      host.endsWith("facebook.com") ||
+      host.endsWith("facebook.net");
+
+    return isTrustedHost ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function renderTextWithDecorations(text: string, decorations?: Decoration[]): React.ReactNode {
   if (!decorations || decorations.length === 0) return text;
 
@@ -346,13 +365,17 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "HTML": {
       if (!node.htmlData?.html) return null;
-      const html = node.htmlData.html;
-      const isVideoEmbed = html.includes("iframe") || html.includes("video") || html.includes("youtube") || html.includes("facebook");
+      const embedUrl = getSafeEmbedUrl(node.htmlData.html);
+      if (!embedUrl) return null;
       return (
-        <div 
-          className={`my-6 w-full flex justify-center ${isVideoEmbed ? "aspect-video" : ""}`}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className="my-6 w-full flex justify-center aspect-video">
+          <iframe
+            src={embedUrl}
+            className="h-full w-full rounded-lg"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
       );
     }
 
