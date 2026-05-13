@@ -9,14 +9,13 @@ import { formatDate } from "@/lib/utils";
 import { resolveAuthorAsync } from "@/lib/author-utils";
 import { RichContentRenderer, extractHeadings } from "@/components/rich-content";
 import { MobileBottomNav } from "@/components/navigation";
-import { ShareButton } from "@/components/share-button";
-import { SaveButton } from "@/components/save-button";
+import { PostHeader } from "@/components/post-header";
 import { ReadingProgress } from "@/components/reading-progress";
 import { TipSection } from "@/components/tip-section";
 import { BackToTop } from "@/components/back-to-top";
-import { BackButton } from "@/components/back-button";
 import { TableOfContents } from "@/components/table-of-contents";
 import { AdSenseSlot } from "@/components/adsense-slot";
+import { ShareButton } from "@/components/share-button";
 
 // --- Data Fetching ---
 
@@ -173,42 +172,24 @@ export default async function PostPage({
       <ReadingProgress />
       <BackToTop />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <BackButton />
-            <Link href="/" className="flex items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo-black.svg"
-                alt="The Isaander"
-                className="h-8 w-auto"
-              />
-            </Link>
-          </div>
-          <div className="flex items-center gap-1">
-            <SaveButton 
-              post={{
-                _id: post._id ?? "",
-                slug: post.slug ?? "",
-                title: post.title ?? "",
-                excerpt: post.excerpt ?? "",
-                coverUrl: coverUrl,
-                categoryLabel: categoryLabel,
-                publishedDate: post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : null,
-              }} 
-            />
-            <ShareButton title={post.title ?? ""} />
-          </div>
-        </div>
-      </header>
+      {/* Header — auto-hides on scroll down for immersive mobile reading */}
+      <PostHeader
+        post={{
+          _id: post._id ?? "",
+          slug: post.slug ?? "",
+          title: post.title ?? "",
+          excerpt: post.excerpt ?? "",
+          coverUrl: coverUrl,
+          categoryLabel: categoryLabel,
+          publishedDate: post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : null,
+        }}
+      />
 
       <main id="main-content" className="flex-1 pb-28">
         {/* Cover Image — full-bleed with gradient transition */}
         {coverUrl && (
           <div className="relative">
-            <div className="relative w-full aspect-video">
+            <div className="relative w-full aspect-[16/10] sm:aspect-video">
               <Image
                 src={coverUrl}
                 alt={post.title ?? ""}

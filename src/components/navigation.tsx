@@ -2,14 +2,59 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Home, Compass, Bookmark, ArrowLeft, Users, LogIn, User as UserIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, Home, Compass, Bookmark, ArrowLeft, LogIn, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+
+/**
+ * Hook that tracks scroll direction.
+ * Returns true when the user is scrolling UP (header should show).
+ * Uses a threshold to avoid jitter from small scroll movements.
+ */
+function useScrollDirection() {
+  const [visible, setVisible] = useState(true);
+  const lastY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const THRESHOLD = 10; // px of scroll before toggling
+
+    function update() {
+      const y = window.scrollY;
+      // Always show header at the very top
+      if (y < 56) {
+        setVisible(true);
+      } else if (Math.abs(y - lastY.current) > THRESHOLD) {
+        setVisible(y < lastY.current); // scrolling up → show
+        lastY.current = y;
+      }
+      ticking.current = false;
+    }
+
+    function onScroll() {
+      if (!ticking.current) {
+        ticking.current = true;
+        requestAnimationFrame(update);
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return visible;
+}
 
 export function StickyHeader({ showBack = false }: { showBack?: boolean }) {
   const { user, signInWithGoogle } = useAuth();
+  const visible = useScrollDirection();
   
   return (
-    <header className="sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm">
+    <header
+      className={`sticky top-0 z-50 bg-surface border-b border-black/5 shadow-sm transition-transform duration-300 ${
+        visible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         <div className="flex items-center gap-3">
           {showBack && (
@@ -87,7 +132,7 @@ export function MobileBottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 w-full bg-surface border-t border-black/5 z-50">
-      <div className="flex justify-around items-center py-3">
+      <div className="flex justify-around items-center pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
@@ -111,3 +156,6 @@ export function MobileBottomNav() {
     </nav>
   );
 }
+
+/** Re-export the scroll direction hook for the post page's inline header */
+export { useScrollDirection };

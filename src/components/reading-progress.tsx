@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useScrollDirection } from "@/components/navigation";
 
 export function ReadingProgress() {
   const barRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const lastProgress = useRef(0);
+  const headerVisible = useScrollDirection();
 
   useEffect(() => {
     function update() {
@@ -46,7 +48,9 @@ export function ReadingProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label="ความคืบหน้าการอ่าน"
-      className="fixed top-14 left-0 z-50 h-[3px] bg-primary transition-none"
+      className={`fixed top-14 left-0 z-50 h-[3px] bg-primary transition-transform duration-300 ${
+        headerVisible ? "translate-y-0" : "-translate-y-14"
+      }`}
       style={{ width: "var(--rp, 0%)" }}
     />
   );

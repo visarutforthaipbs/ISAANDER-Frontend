@@ -199,7 +199,7 @@ function RichContentNode({ node }: { node: RichContentNode }) {
   switch (node.type) {
     case "PARAGRAPH":
       return (
-        <p className="font-sarabun text-base leading-[1.9] text-text-main mb-5">
+        <p className="font-sarabun text-lg sm:text-base leading-[1.9] text-text-main mb-5">
           {children}
         </p>
       );
