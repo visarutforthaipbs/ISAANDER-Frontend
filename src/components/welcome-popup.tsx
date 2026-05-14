@@ -106,7 +106,7 @@ export function WelcomePopup() {
               1
             </span>
             <p className="font-sarabun text-sm text-text-main leading-relaxed">
-              คุณจะได้รับส่วนแบ่ง <strong className="text-primary">60%</strong> จากรายได้ค่าโฆษณาที่เกิดขึ้นบนหน้าบทความของคุณ ต่อเนื่องยาวนานถึง 5 ปี
+              คุณจะได้รับส่วนแบ่ง <strong className="text-primary">50%</strong> จากรายได้ค่าโฆษณาที่เกิดขึ้นบนหน้าบทความของคุณ ต่อเนื่องยาวนานถึง 5 ปี
             </p>
           </li>
           <li className="flex gap-3">
