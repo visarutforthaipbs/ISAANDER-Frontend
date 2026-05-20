@@ -136,13 +136,24 @@ export default async function PostPage({
   const inArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT;
   const belowArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_BELOW_ARTICLE_SLOT;
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: post.title,
     description: post.excerpt,
     image: coverUrl ? [coverUrl] : [],
+    datePublished: post.firstPublishedDate ? new Date(post.firstPublishedDate).toISOString() : (post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : undefined),
     dateModified: post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : undefined,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${baseUrl}/post/${decodedSlug}`,
+    },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["#article-headline"],
+    },
     author: author.slug === "theisaander"
       ? {
           "@type": "Organization" as const,
@@ -157,6 +168,7 @@ export default async function PostPage({
     publisher: {
       "@type": "NewsMediaOrganization",
       name: "The Isaander",
+      url: "https://www.theisaander.com",
       logo: {
         "@type": "ImageObject",
         url: "https://www.theisaander.com/logo-black.svg",
@@ -215,7 +227,7 @@ export default async function PostPage({
                 {categoryLabel}
               </span>
             )}
-            <h1 className="font-prompt text-2xl sm:text-3xl font-bold text-text-main leading-snug">
+            <h1 id="article-headline" className="font-prompt text-2xl sm:text-3xl font-bold text-text-main leading-snug">
               {post.title}
             </h1>
 
