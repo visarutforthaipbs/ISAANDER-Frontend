@@ -62,6 +62,35 @@ export function ReadingEnhancements({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Keep tooltip within screen boundaries on mobile
+  const getClampedTooltipStyle = () => {
+    if (!tooltipCoords) return {};
+    if (typeof window === "undefined") {
+      return {
+        position: "absolute" as const,
+        left: `${tooltipCoords.x}px`,
+        top: `${tooltipCoords.y}px`,
+        transform: "translateX(-50%)",
+      };
+    }
+    
+    const tooltipWidth = 165; // Estimated width for "แชร์ประโยคนี้ ❤️"
+    const screenPadding = 12;
+    const minLeft = tooltipWidth / 2 + screenPadding;
+    const maxLeft = window.innerWidth - tooltipWidth / 2 - screenPadding;
+    
+    const viewportX = tooltipCoords.x - window.scrollX;
+    const clampedViewportX = Math.max(minLeft, Math.min(maxLeft, viewportX));
+    const finalX = clampedViewportX + window.scrollX;
+    
+    return {
+      position: "absolute" as const,
+      left: `${finalX}px`,
+      top: `${tooltipCoords.y}px`,
+      transform: "translateX(-50%)",
+    };
+  };
+
   // Toggle Focus Mode
   useEffect(() => {
     const htmlElement = document.documentElement;
@@ -126,7 +155,7 @@ export function ReadingEnhancements({
     };
 
     // Close tooltip when clicking outside
-    const handleMouseDown = (e: MouseEvent) => {
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest(".quote-tooltip-trigger") || target.closest(".quote-modal")) {
         return;
@@ -137,9 +166,11 @@ export function ReadingEnhancements({
 
     document.addEventListener("selectionchange", handleSelectionChange);
     document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("touchstart", handleMouseDown);
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
       document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("touchstart", handleMouseDown);
     };
   }, []);
 
@@ -450,22 +481,17 @@ export function ReadingEnhancements({
       {tooltipCoords && selectionText && (
         <button
           onClick={openQuoteModal}
-          style={{
-            position: "absolute",
-            left: `${tooltipCoords.x}px`,
-            top: `${tooltipCoords.y}px`,
-            transform: "translateX(-50%)",
-          }}
+          style={getClampedTooltipStyle()}
           className="quote-tooltip-trigger z-[50] flex items-center gap-1.5 bg-[#181A1B] text-white px-3 py-2 rounded-lg text-xs font-prompt font-semibold shadow-xl animate-fade-in hover:bg-black transition-colors"
         >
           <Sparkles className="w-3.5 h-3.5 text-[#F9D423]" />
-          <span>สร้างบัตรข้อความ</span>
+          <span>แชร์ประโยคนี้ ❤️</span>
         </button>
       )}
 
       {/* Quote Generator Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs quote-modal">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs quote-modal">
           <div className="relative bg-surface w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
             {/* Modal Header */}
@@ -483,7 +509,7 @@ export function ReadingEnhancements({
             </div>
 
             {/* Modal Scrollable Body */}
-            <div className="p-6 overflow-y-auto flex-1 flex flex-col items-center gap-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 flex flex-col items-center gap-4 sm:gap-6">
               
               {/* Presets Selection */}
               <div className="w-full flex flex-col gap-2 shrink-0">
@@ -508,7 +534,7 @@ export function ReadingEnhancements({
               </div>
 
               {/* Card Live Preview (Aspect 1:1) */}
-              <div className="w-full max-w-[340px] aspect-square rounded-xl overflow-hidden shadow-lg border border-black/5 relative shrink-0">
+              <div className="w-full max-w-[280px] sm:max-w-[340px] aspect-square rounded-xl overflow-hidden shadow-lg border border-black/5 relative shrink-0">
                 <div
                   className={`w-full h-full flex flex-col justify-between p-6 ${PRESETS[selectedPresetIdx].class}`}
                 >
