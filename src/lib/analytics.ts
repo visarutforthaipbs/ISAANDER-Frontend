@@ -8,7 +8,11 @@ const PROPERTY_ID = RAW_PROPERTY_ID?.startsWith("properties/")
 function getAnalyticsClient() {
   const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
   const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  let rawKey = process.env.GOOGLE_PRIVATE_KEY;
+  if (rawKey && rawKey.startsWith('"') && rawKey.endsWith('"')) {
+    rawKey = rawKey.substring(1, rawKey.length - 1);
+  }
+  const privateKey = rawKey?.replace(/\\n/g, "\n");
 
   const credentials = credentialsJson
     ? JSON.parse(credentialsJson)

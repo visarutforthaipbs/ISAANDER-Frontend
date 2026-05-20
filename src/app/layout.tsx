@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Sarabun, Prompt } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
 import { PageLoading } from "@/components/page-loading";
+import { ReaderPreferencesLoader } from "@/components/reader-preferences-loader";
 
 // `display: "optional"` eliminates font-swap CLS — the browser uses the
 // fallback if the custom font isn't ready within ~100ms (no late swap).
@@ -31,6 +33,20 @@ const dbHelvethaica = localFont({
   display: "optional",
   fallback: ["system-ui", "-apple-system", "Segoe UI", "Tahoma", "sans-serif"],
   preload: true,
+});
+
+const sarabun = Sarabun({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["thai", "latin"],
+  variable: "--font-sarabun-google",
+  display: "swap",
+});
+
+const prompt = Prompt({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["thai", "latin"],
+  variable: "--font-prompt-google",
+  display: "swap",
 });
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.theisaander.com";
@@ -110,7 +126,7 @@ export default function RootLayout({
   return (
     <html
       lang="th"
-      className={`${dbHelvethaica.variable} h-full antialiased`}
+      className={`${dbHelvethaica.variable} ${sarabun.variable} ${prompt.variable} h-full antialiased`}
       data-scroll-behavior="smooth"
     >
       <head>
@@ -136,6 +152,7 @@ export default function RootLayout({
           ข้ามไปยังเนื้อหาหลัก
         </a>
         <PageLoading />
+        <ReaderPreferencesLoader />
         <AuthProvider>
           {gaMeasurementId && (
             <>

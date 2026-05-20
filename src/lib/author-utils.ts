@@ -213,6 +213,12 @@ export interface WixWriter {
   localAuthor?: Author;
 }
 
+/** Cache of Wix member profile objects fetched from the API */
+const wixMemberCache = new Map<string, any>();
+
+/** Cache of post views fetched from the API */
+const postViewsCache = new Map<string, number>();
+
 /**
  * Fetch all writers from Wix by:
  * 1. Getting all posts to find unique memberIds + post counts
@@ -275,22 +281,33 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
   // Fetch view counts for all posts and sum per member
   const memberViewCount = new Map<string, number>();
   const allPostIds = allPosts.map((p) => p._id).filter((id): id is string => !!id);
-  const viewResults = await Promise.all(
-    allPostIds.map(async (postId) => {
-      try {
-        const result = await wixClient.posts.getPostMetrics(postId);
-        return { postId, views: result?.metrics?.views ?? 0 };
-      } catch {
-        return { postId, views: 0 };
-      }
-    })
-  );
+  const postIdsToFetch = allPostIds.filter((id) => !postViewsCache.has(id));
+
+  // OPTIMIZATION: Only request metrics from the Wix API for posts that are not cached in-memory
+  if (postIdsToFetch.length > 0) {
+    const viewResults = await Promise.all(
+      postIdsToFetch.map(async (postId) => {
+        try {
+          const result = await wixClient.posts.getPostMetrics(postId);
+          const views = result?.metrics?.views ?? 0;
+          postViewsCache.set(postId, views);
+          return { postId, views };
+        } catch {
+          // Cache 0 so we do not continually hit failed API requests
+          postViewsCache.set(postId, 0);
+          return { postId, views: 0 };
+        }
+      })
+    );
+  }
+
   // Map postId → memberId for aggregation
   const postToMember = new Map<string, string>();
   for (const post of allPosts) {
     if (post._id && post.memberId) postToMember.set(post._id, post.memberId);
   }
-  for (const { postId, views } of viewResults) {
+  for (const postId of allPostIds) {
+    const views = postViewsCache.get(postId) ?? 0;
     const mid = postToMember.get(postId);
     if (mid) memberViewCount.set(mid, (memberViewCount.get(mid) ?? 0) + views);
   }
@@ -315,15 +332,38 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
     firestoreMap = new Map();
   }
 
+  // OPTIMIZATION: Fetch all member profiles in parallel and cache them in-memory
+  const memberIdsToFetch = Array.from(memberPostCount.keys());
+  const memberFetchResults = await Promise.all(
+    memberIdsToFetch.map(async (memberId) => {
+      try {
+        let member = wixMemberCache.get(memberId);
+        if (!member) {
+          member = await wixClient.members.getMember(memberId, {
+            fieldsets: ["FULL"],
+          });
+          wixMemberCache.set(memberId, member);
+        }
+        return { memberId, member };
+      } catch {
+        return { memberId, member: null };
+      }
+    })
+  );
+
+  const memberMap = new Map<string, any>();
+  for (const res of memberFetchResults) {
+    if (res.member) {
+      memberMap.set(res.memberId, res.member);
+    }
+  }
+
   for (const [memberId, postCount] of memberPostCount) {
     // Check if we have a local author config (by wixMemberId)
     const local = localAuthors.find((a) => a.wixMemberId === memberId);
 
-    try {
-      const member = await wixClient.members.getMember(memberId, {
-        fieldsets: ["FULL"],
-      });
-
+    const member = memberMap.get(memberId);
+    if (member) {
       // Also try matching local config by the Wix profile slug
       const profileSlug = member?.profile?.slug;
       const localBySlug = !local && profileSlug
@@ -381,7 +421,7 @@ const _fetchWixWriters = async (): Promise<WixWriter[]> => {
         totalViews: memberViewCount.get(memberId) ?? 0,
         localAuthor: merged,
       });
-    } catch {
+    } else {
       const catIds = memberCategoryIds.get(memberId);
       const categories = catIds
         ? [...catIds].map((id) => categoryMap.get(id)).filter((l): l is string => !!l)

@@ -5,12 +5,13 @@ import { getPostImageUrl, formatDate } from "@/lib/utils";
 import { resolveAuthorAsync } from "@/lib/author-utils";
 import type { Author } from "@/data/authors";
 import { StickyHeader, MobileBottomNav } from "@/components/navigation";
+import { Clock } from "lucide-react";
 
 export const revalidate = 300;
 
 export const metadata = {
   title: "สำรวจ — The Isaander",
-  description: "สำรวจบทความตามหมวดหมู่",
+  description: "สำรวจบทความตามหมวดหมู่และค้นหาเรื่องราวอีสานที่น่าสนใจ",
 };
 
 async function getCategories() {
@@ -22,7 +23,7 @@ async function getPostsByCategory(categoryId: string) {
   try {
     const { posts: items } = await wixClient.posts.listPosts({
       categoryIds: [categoryId],
-      paging: { limit: 6 },
+      paging: { limit: 3 }, // Limit to exactly 3 posts for clean grid
     });
     return items ?? [];
   } catch {
@@ -30,12 +31,22 @@ async function getPostsByCategory(categoryId: string) {
   }
 }
 
+// Styling tokens matching DESIGN.md
+const chunkLabelStyle = {
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase" as const,
+};
 
+const metaStyle = {
+  fontSize: "0.625rem",
+  letterSpacing: "0.04em",
+};
 
 export default async function ExplorePage() {
   const categories = await getCategories();
 
-  // Fetch posts for each category in parallel
   const categoryPosts = await Promise.all(
     categories.map(async (cat) => ({
       category: cat,
@@ -43,15 +54,13 @@ export default async function ExplorePage() {
     }))
   );
 
-  // Filter out empty categories
   const nonEmpty = categoryPosts.filter((cp) => cp.posts.length > 0);
 
-  // Pre-resolve all authors asynchronously (same pattern as homepage)
   const authorMap = new Map<string, Author>();
   const allPosts = nonEmpty.flatMap((cp) => cp.posts);
   await Promise.all(
     allPosts.map(async (post) => {
-      if (post._id && post.memberId) {
+      if (post._id) {
         try {
           const author = await resolveAuthorAsync(post);
           authorMap.set(post._id, author);
@@ -67,118 +76,167 @@ export default async function ExplorePage() {
       <StickyHeader />
 
       <main id="main-content" className="flex-1 pb-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
-          {/* Signal 39: Layer 3 - Delete obvious titles, use high-surprisal framing. */}
-          <h1 className="font-prompt text-2xl sm:text-3xl font-bold text-text-main mb-6">
-            ค้นพบเรื่องราวที่สนใจ
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10">
+          {/* display-hero heading */}
+          <h1
+            className="font-prompt font-semibold text-text-main mb-3"
+            style={{ fontSize: "clamp(1.75rem, 5vw, 3rem)", lineHeight: 1.1, letterSpacing: "-0.02em" }}
+          >
+            อ่านเรื่องราวอีสานที่คุณยังไม่รู้
           </h1>
+          <p className="font-sarabun text-text-muted text-sm max-w-lg mb-8 leading-relaxed">
+            เจาะลึกวิถีชีวิต ศิลปวัฒนธรรม และประเด็นสังคมในภาคอีสาน ผ่านมุมมองของคนในพื้นที่แบบไม่มีฟิลเตอร์
+          </p>
 
-          {/* Category pills */}
-          {/* Signal 39: Layer 1 - High contrast color encoding. */}
-          <div className="flex flex-wrap gap-3 mb-10">
-            {nonEmpty.map(({ category }) => (
-              <a
+          {/* Section Divider */}
+          <div className="border-t border-black/5 pt-8 mb-6">
+            <p className="text-text-muted mb-4 font-prompt font-medium" style={chunkLabelStyle}>
+              สำรวจตามหมวดหมู่
+            </p>
+
+            {/* Premium Category Pills */}
+            <div className="flex flex-wrap gap-2" role="navigation" aria-label="หมวดหมู่">
+              {nonEmpty.map(({ category }) => (
+                <a
+                  key={category._id}
+                  href={`#cat-${category._id}`}
+                  className="px-4 py-2 bg-surface hover:bg-isaander-orange hover:text-white border border-black/5 hover:border-isaander-orange text-text-main font-sarabun text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                  style={{ borderRadius: "20px" }}
+                >
+                  {category.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Category Sections (Pillars) with Spacing.Breath (64px) */}
+          <div className="flex flex-col gap-16 mt-12">
+            {nonEmpty.map(({ category, posts }) => (
+              <section
                 key={category._id}
-                href={`#cat-${category._id}`}
-                className="px-4 py-2 rounded-full bg-surface border border-black/10 text-text-main font-sarabun text-sm font-medium hover:border-isaander-orange hover:text-isaander-orange transition-colors shadow-sm"
+                id={`cat-${category._id}`}
+                className="scroll-mt-24 w-full border-t border-black/5 pt-8"
               >
-                {category.label}
-              </a>
+                {/* Chunk label */}
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <p className="text-text-muted mb-1" style={chunkLabelStyle}>
+                      หมวดหมู่
+                    </p>
+                    <h2 className="font-prompt text-xl font-bold text-text-main flex items-center gap-2">
+                      <span
+                        className="w-1 h-5 bg-isaander-orange rounded-full shrink-0"
+                        aria-hidden="true"
+                        style={{ borderRadius: "4px" }}
+                      />
+                      {category.label}
+                    </h2>
+                  </div>
+                  
+                  <Link
+                    href={`/search?category=${category._id}`}
+                    className="font-sarabun text-xs font-bold text-isaander-orange hover:underline shrink-0"
+                  >
+                    ดูทั้งหมด →
+                  </Link>
+                </div>
+
+                {/* Grid List of posts for this category */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {posts.map((post) => {
+                    const imageUrl = getPostImageUrl(post.media?.wixMedia?.image, 350, 220);
+                    const author = post._id ? authorMap.get(post._id) : undefined;
+
+                    return (
+                      <Link
+                        key={post._id}
+                        href={`/post/${post.slug}`}
+                        className="flex flex-col bg-surface hover:shadow-md transition-shadow border border-black/5 group"
+                        style={{ borderRadius: "8px", overflow: "hidden" }}
+                      >
+                        {/* Image */}
+                        <div className="relative aspect-video w-full overflow-hidden bg-black/5">
+                          {imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt={post.title ?? ""}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 300px"
+                              className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-stone-200">
+                              <span className="text-stone-400 font-prompt text-xs">No Image</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                          <div>
+                            <h3 className="font-sarabun font-semibold text-text-main line-clamp-2 leading-relaxed" style={{ fontSize: "0.875rem" }}>
+                              {post.title}
+                            </h3>
+                            <p className="font-sarabun text-text-muted text-xs line-clamp-2 mt-1 leading-relaxed">
+                              {post.excerpt}
+                            </p>
+                          </div>
+
+                          {/* Byline */}
+                          <div className="flex items-center justify-between border-t border-black/5 pt-3 mt-1">
+                            {author && (
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {author.avatar ? (
+                                  <div className="relative w-4.5 h-4.5 rounded-full overflow-hidden shrink-0">
+                                    <Image
+                                      src={author.avatar}
+                                      alt={author.name}
+                                      fill
+                                      unoptimized
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="bg-primary/10 flex items-center justify-center shrink-0 w-4.5 h-4.5 rounded-full">
+                                    <span className="font-prompt font-bold text-primary" style={{ fontSize: "0.5rem" }}>
+                                      {author.name.charAt(0)}
+                                    </span>
+                                  </div>
+                                )}
+                                <span className="text-text-muted font-sarabun truncate" style={metaStyle}>
+                                  {author.name}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1 text-text-muted font-sarabun" style={metaStyle}>
+                              <time dateTime={post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : undefined}>
+                                {formatDate(post.lastPublishedDate)}
+                              </time>
+                              {post.minutesToRead != null && post.minutesToRead > 0 && (
+                                <>
+                                  <span>·</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Clock className="w-2.5 h-2.5 shrink-0" />
+                                    {post.minutesToRead} น.
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
         </div>
 
-        {/* Category sections */}
-        {/* Signal 39: Breath Rule - Generous vertical space between distinct categories */}
-        {nonEmpty.map(({ category, posts }) => (
-          <section
-            key={category._id}
-            id={`cat-${category._id}`}
-            className="mb-16 scroll-mt-24"
-          >
-            <div className="max-w-3xl mx-auto px-4 sm:px-6">
-              <h2 className="font-prompt text-xl font-semibold text-text-main mb-6 flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-isaander-orange rounded-full" aria-hidden="true" />
-                {category.label}
-              </h2>
-            </div>
-
-            {/* Horizontal scroll cards */}
-            <div className="max-w-3xl mx-auto pl-4 sm:pl-6 relative">
-              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 pr-4 sm:pr-6">
-                {posts.map((post) => {
-                  const imageUrl = getPostImageUrl(
-                    post.media?.wixMedia?.image,
-                    400,
-                    250
-                  );
-                  const author = post._id ? authorMap.get(post._id) : undefined;
-
-                  return (
-                    <Link
-                      key={post._id}
-                      href={`/post/${post.slug}`}
-                      className="w-64 shrink-0 snap-center bg-surface rounded-lg shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
-                    >
-                      {imageUrl ? (
-                        <div className="relative rounded-md aspect-[16/10] w-full overflow-hidden">
-                          <Image
-                            src={imageUrl}
-                            alt={post.title ?? ""}
-                            fill
-                            sizes="256px"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="bg-slate-200 rounded-md aspect-[16/10] w-full" />
-                      )}
-                      <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
-                        {post.title}
-                      </h3>
-                      <div className="flex items-center gap-1.5">
-                        {author?.avatar ? (
-                          <Image
-                            src={author.avatar}
-                            alt={author.name}
-                            width={16}
-                            height={16}
-                            unoptimized
-                            className="w-4 h-4 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center">
-                            <span className="text-[8px] text-primary font-prompt font-bold">
-                              {(author?.name || "?").charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <span className="font-sarabun text-xs text-text-muted truncate">
-                          {author?.name || "The Isaander"}
-                        </span>
-                      </div>
-                      <time
-                        dateTime={post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : undefined}
-                        className="font-sarabun text-xs text-text-muted"
-                      >
-                        {formatDate(post.lastPublishedDate)}
-                      </time>
-                    </Link>
-                  );
-                })}
-              </div>
-              {/* Right-edge fade indicating more cards */}
-              <div
-                className="absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none"
-                aria-hidden="true"
-              />
-            </div>
-          </section>
-        ))}
-
         {nonEmpty.length === 0 && (
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center py-20">
-            <p className="text-text-muted font-sarabun">ยังไม่มีหมวดหมู่</p>
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center py-16">
+            <p className="text-text-muted font-sarabun">ยังไม่มีหมวดหมู่เนื้อหา</p>
           </div>
         )}
       </main>

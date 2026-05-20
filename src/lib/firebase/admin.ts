@@ -14,10 +14,11 @@ function getAdminApp(): App {
       const email =
         process.env.FIREBASE_ADMIN_CLIENT_EMAIL ??
         process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-      const key = (
-        process.env.FIREBASE_ADMIN_PRIVATE_KEY ??
-        process.env.GOOGLE_PRIVATE_KEY
-      )?.replace(/\\n/g, "\n");
+      let rawKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? process.env.GOOGLE_PRIVATE_KEY;
+      if (rawKey && rawKey.startsWith('"') && rawKey.endsWith('"')) {
+        rawKey = rawKey.substring(1, rawKey.length - 1);
+      }
+      const key = rawKey?.replace(/\\n/g, "\n");
 
       if (email && key) {
         app = initializeApp({

@@ -16,6 +16,7 @@ import { BackToTop } from "@/components/back-to-top";
 import { TableOfContents } from "@/components/table-of-contents";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { ShareButton } from "@/components/share-button";
+import { ReadingEnhancements } from "@/components/reading-enhancements";
 
 // --- Data Fetching ---
 
@@ -255,16 +256,20 @@ export default async function PostPage({
 
 
           {inArticleAdSlot && (
-            <AdSenseSlot
-              slot={inArticleAdSlot}
-              className="my-8 rounded-lg border border-black/10 bg-surface p-3"
-            />
+            <div className="adsense-slot-wrapper">
+              <AdSenseSlot
+                slot={inArticleAdSlot}
+                className="my-8 rounded-lg border border-black/10 bg-surface p-3"
+              />
+            </div>
           )}
 
           {/* Table of Contents */}
-          <TableOfContents
-            headings={extractHeadings(post.richContent as Parameters<typeof extractHeadings>[0])}
-          />
+          <div className="toc-wrapper">
+            <TableOfContents
+              headings={extractHeadings(post.richContent as Parameters<typeof extractHeadings>[0])}
+            />
+          </div>
 
           {/* Rich Content */}
           <div className="prose-wrapper">
@@ -275,7 +280,7 @@ export default async function PostPage({
 
           {/* Fallback: plain text if no rich content */}
           {!post.richContent?.nodes?.length && post.contentText && (
-            <div className="font-sarabun text-base leading-relaxed text-text-main whitespace-pre-line">
+            <div className="font-sarabun text-base leading-relaxed text-text-main whitespace-pre-line prose-wrapper">
               {post.contentText}
             </div>
           )}
@@ -283,7 +288,7 @@ export default async function PostPage({
 
         {/* End-of-article share CTA */}
         {/* Signal 39: Breath Rule - Insert 3-5 seconds of low-bitrate space after major insights */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 share-cta-wrapper">
           <div className="border-t border-black/10 pt-10 flex flex-col items-center gap-3 text-center">
             <p className="font-prompt font-semibold text-text-main">
               อ่านจบแล้ว — แชร์บทความนี้
@@ -293,12 +298,12 @@ export default async function PostPage({
         </div>
 
         {/* Tipping Section */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10 tipping-section-wrapper">
           <TipSection author={author} />
         </div>
 
         {belowArticleAdSlot && (
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10 adsense-slot-wrapper">
             <AdSenseSlot
               slot={belowArticleAdSlot}
               className="rounded-lg border border-black/10 bg-surface p-3"
@@ -308,73 +313,80 @@ export default async function PostPage({
 
         {/* Related Posts */}
         {related.length > 0 && (
-          <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 mb-8">
-            <h2 className="font-prompt text-lg font-semibold text-text-main mb-6 flex items-center gap-2">
-              <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
-              บทความที่เกี่ยวข้อง
-            </h2>
-            <div className="flex flex-col gap-4">
-              {related.map((rp) => {
-                const rpImg = rp.media?.wixMedia?.image
-                  ? (() => {
-                      try {
-                        return media.getScaledToFillImageUrl(
-                          rp.media!.wixMedia!.image!,
-                          300,
-                          300,
-                          {}
-                        );
-                      } catch {
-                        return null;
-                      }
-                    })()
-                  : null;
+          <div className="related-posts-wrapper">
+            <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 mb-8">
+              <h2 className="font-prompt text-lg font-semibold text-text-main mb-6 flex items-center gap-2">
+                <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
+                บทความที่เกี่ยวข้อง
+              </h2>
+              <div className="flex flex-col gap-4">
+                {related.map((rp) => {
+                  const rpImg = rp.media?.wixMedia?.image
+                    ? (() => {
+                        try {
+                          return media.getScaledToFillImageUrl(
+                            rp.media!.wixMedia!.image!,
+                            300,
+                            300,
+                            {}
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()
+                    : null;
 
-                return (
-                  <Link
-                    key={rp._id}
-                    href={`/post/${rp.slug}`}
-                    className="flex gap-4 bg-surface rounded-lg shadow-sm p-3 items-center hover:shadow-md transition-shadow"
-                  >
-                    <div className="w-[25%] shrink-0">
-                      {rpImg ? (
-                        <div className="relative rounded-md aspect-square w-full overflow-hidden">
-                          <Image
-                            src={rpImg}
-                            alt={rp.title ?? ""}
-                            fill
-                            sizes="(max-width: 768px) 25vw, 100px"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="bg-slate-200 rounded-md aspect-square w-full" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {rp.categoryIds?.[0] && categoryMap.get(rp.categoryIds[0]) && (
-                        <span className="inline-block bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2.5 py-0.5 rounded-full mb-1">
-                          {categoryMap.get(rp.categoryIds[0])}
-                        </span>
-                      )}
-                      <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
-                        {rp.title}
-                      </h3>
-                      <time
-                        dateTime={rp.lastPublishedDate ? new Date(rp.lastPublishedDate).toISOString() : undefined}
-                        className="font-sarabun text-xs text-text-muted mt-1 block"
-                      >
-                        {formatDate(rp.lastPublishedDate)}
-                      </time>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
+                  return (
+                    <Link
+                      key={rp._id}
+                      href={`/post/${rp.slug}`}
+                      className="flex gap-4 bg-surface rounded-lg shadow-sm p-3 items-center hover:shadow-md transition-shadow"
+                    >
+                      <div className="w-[25%] shrink-0">
+                        {rpImg ? (
+                          <div className="relative rounded-md aspect-square w-full overflow-hidden">
+                            <Image
+                              src={rpImg}
+                              alt={rp.title ?? ""}
+                              fill
+                              sizes="(max-width: 768px) 25vw, 100px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="bg-slate-200 rounded-md aspect-square w-full" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {rp.categoryIds?.[0] && categoryMap.get(rp.categoryIds[0]) && (
+                          <span className="inline-block bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2.5 py-0.5 rounded-full mb-1">
+                            {categoryMap.get(rp.categoryIds[0])}
+                          </span>
+                        )}
+                        <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
+                          {rp.title}
+                        </h3>
+                        <time
+                          dateTime={rp.lastPublishedDate ? new Date(rp.lastPublishedDate).toISOString() : undefined}
+                          className="font-sarabun text-xs text-text-muted mt-1 block"
+                        >
+                          {formatDate(rp.lastPublishedDate)}
+                        </time>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
         )}
       </main>
 
+      <ReadingEnhancements
+        postTitle={post.title ?? ""}
+        authorName={author.name}
+        authorAvatar={author.avatar}
+      />
       <MobileBottomNav />
     </>
   );

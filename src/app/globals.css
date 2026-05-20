@@ -4,7 +4,7 @@
   /* Main brand colors (Black and White are primary) */
   --color-primary: #100d0c;
   --color-secondary: #f4f1ec;
-  --color-background: #FFFFFF;
+  --color-background: #F7F5F2;
   --color-surface: #FFFFFF;
   --color-text-main: #100d0c;
   --color-text-muted: #6B7280;
@@ -143,4 +143,110 @@ body {
   100% {
     transform: translateX(450%);
   }
+}
+
+/* ---- Reader Mode Styling ---- */
+:root {
+  --reader-font-size: 1.125rem;
+  --reader-line-height: 1.9;
+  --reader-font-family: var(--font-dbhelvethaica), sans-serif;
+}
+
+/* Reader Font Families */
+html.font-preference-looped {
+  --reader-font-family: var(--font-sarabun-google), sans-serif;
+}
+
+html.font-preference-prompt {
+  --reader-font-family: var(--font-prompt-google), sans-serif;
+}
+
+/* Reader Color Themes - Overriding Tailwind v4 Color System Variables dynamically */
+html.theme-sepia {
+  --color-background: #F4ECD8 !important;
+  --color-surface: #FCF8EE !important;
+  --color-text-main: #3C2F2F !important;
+  --color-text-muted: #7A6B58 !important;
+  --color-primary: #8E4432 !important; /* Slightly darker terracotta for sepia contrast */
+  background-color: #F4ECD8 !important;
+  color: #3C2F2F !important;
+}
+
+html.theme-dark {
+  --color-background: #121212 !important;
+  --color-surface: #1E1E1E !important;
+  --color-text-main: #E2E8F0 !important;
+  --color-text-muted: #94A3B8 !important;
+  --color-primary: #E07A5F !important; /* Slightly lighter terracotta for dark mode contrast */
+  background-color: #121212 !important;
+  color: #E2E8F0 !important;
+}
+
+/* Dark mode image opacity */
+html.theme-dark img {
+  opacity: 0.85;
+  transition: opacity 0.3s;
+}
+html.theme-dark img:hover {
+  opacity: 1;
+}
+
+/* Apply reader preferences to article body elements specifically */
+.prose-wrapper p, 
+.prose-wrapper li, 
+.prose-wrapper blockquote div,
+.rich-content p,
+.rich-content li {
+  font-family: var(--reader-font-family, var(--font-dbhelvethaica)), sans-serif !important;
+  font-size: var(--reader-font-size, 1.125rem) !important;
+  line-height: var(--reader-line-height, 1.9) !important;
+}
+
+/* ---- Immersive Focus Mode Styling ---- */
+html.is-focus-mode {
+  --color-background: #FAF6EE !important;
+  --color-text-main: #2B251F !important;
+  background-color: #FAF6EE !important;
+  transition: background-color 0.5s ease;
+}
+
+html.is-focus-mode body {
+  background-color: #FAF6EE !important;
+  color: #2B251F !important;
+}
+
+/* Distraction-free: hide non-essential page blocks completely */
+html.is-focus-mode header,
+html.is-focus-mode footer,
+html.is-focus-mode .mobile-bottom-nav,
+html.is-focus-mode .adsense-slot-wrapper,
+html.is-focus-mode .toc-wrapper,
+html.is-focus-mode .share-cta-wrapper,
+html.is-focus-mode .tipping-section-wrapper,
+html.is-focus-mode .related-posts-wrapper {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Format typography specifically for optimal deep reading */
+html.is-focus-mode .prose-wrapper p,
+html.is-focus-mode .rich-content p,
+html.is-focus-mode .prose-wrapper li,
+html.is-focus-mode .rich-content li {
+  font-size: 1.25rem !important; /* Larger text for reading ease */
+  line-height: 2.1 !important;   /* Extra vertical spacing */
+  color: #2B251F !important;
+  margin-bottom: 1.75rem !important;
+}
+
+html.is-focus-mode .prose-wrapper blockquote,
+html.is-focus-mode .rich-content blockquote {
+  background: rgba(230, 92, 0, 0.05) !important;
+  border-left-color: #E65C00 !important;
+}
+
+html.is-focus-mode .back-to-top {
+  display: flex !important;
+  opacity: 1 !important;
 }

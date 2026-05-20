@@ -8,6 +8,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { CheckCircle2, ChevronRight, LogOut, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { ReaderSettings } from "@/components/reader-settings";
 
 export default function ProfilePage() {
   const { user, loading, logOut, signInWithGoogle } = useAuth();
@@ -253,6 +254,8 @@ export default function ProfilePage() {
               </button>
             </div>
           </form>
+
+          <ReaderSettings layout="inline" />
 
           {/* Writer Call To Action box */}
           {user.role !== "writer" && (
