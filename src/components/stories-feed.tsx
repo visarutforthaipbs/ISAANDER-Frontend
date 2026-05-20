@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Clock } from "lucide-react";
-import { getPostImageUrl, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 // Define a type close to Wix Post type for local consumption
 interface FeedPost {
@@ -14,11 +14,7 @@ interface FeedPost {
   excerpt?: string;
   lastPublishedDate?: any;
   minutesToRead?: number;
-  media?: {
-    wixMedia?: {
-      image?: any;
-    };
-  };
+  computedImageUrl?: string | null;
   categoryIds?: string[];
 }
 
@@ -110,7 +106,7 @@ export function StoriesFeed({ posts, categoryMap, authorMap }: StoriesFeedProps)
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredPosts.map((post) => {
-            const imageUrl = getPostImageUrl(post.media?.wixMedia?.image, 400, 250);
+            const imageUrl = post.computedImageUrl ?? null;
             const author = post._id ? authorMap[post._id] : undefined;
             const categoryLabel = post.categoryIds?.[0]
               ? categoryMap[post.categoryIds[0]] ?? null

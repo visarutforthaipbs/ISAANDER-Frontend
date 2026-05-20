@@ -59,6 +59,7 @@ export function ReadingEnhancements({
   const [selectedPresetIdx, setSelectedPresetIdx] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [fontSizeScale, setFontSizeScale] = useState(1);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -181,6 +182,7 @@ export function ReadingEnhancements({
 
   const openQuoteModal = () => {
     setIsModalOpen(true);
+    setFontSizeScale(1);
     setTooltipCoords(null);
   };
 
@@ -294,11 +296,12 @@ export function ReadingEnhancements({
     ctx.restore();
 
     // 3. Draw quote text
-    // Adjust size based on string length to fit long quotes
+    // Adjust size based on string length, then apply user scale
     let fontSize = 44;
     if (selectionText.length > 250) fontSize = 28;
     else if (selectionText.length > 150) fontSize = 34;
     else if (selectionText.length > 80) fontSize = 38;
+    fontSize = Math.round(fontSize * fontSizeScale);
 
     ctx.font = `italic 500 ${fontSize}px ` + sarabunFont;
     ctx.fillStyle = preset.canvasText;
@@ -400,20 +403,17 @@ export function ReadingEnhancements({
     ctx.font = `bold 30px ` + promptFont;
     ctx.fillText(authorName, 280, 915);
     
-    // Author Title / Beat -> Replace with truncated Article Title
+    // Article Title — wraps up to 2 lines
     ctx.save();
     ctx.font = `20px ` + sarabunFont;
     ctx.fillStyle = preset.canvasText;
     ctx.globalAlpha = isLightTheme ? 0.5 : 0.7;
-    
-    let footerTitle = `จากบทความ: ${postTitle}`;
-    if (ctx.measureText(footerTitle).width > 400) {
-      while (ctx.measureText(footerTitle + "...").width > 400 && footerTitle.length > 0) {
-        footerTitle = footerTitle.slice(0, -1);
-      }
-      footerTitle += "...";
-    }
-    ctx.fillText(footerTitle, 280, 952);
+
+    const titleLines = getLines(ctx, `จากบทความ: ${postTitle}`, 400).slice(0, 2);
+    const titleLineHeight = 28;
+    titleLines.forEach((line, i) => {
+      ctx.fillText(line, 280, 952 + i * titleLineHeight);
+    });
     ctx.restore();
 
     // 6. Draw Branding Logo
@@ -503,7 +503,7 @@ export function ReadingEnhancements({
             <div className="flex items-center justify-between px-6 py-4 border-b border-black/5 shrink-0">
               <h3 className="font-prompt font-bold text-text-main flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#E65C00]" />
-                <span>บัตรข้อความสำหรับแชร์</span>
+                <span>แชร์ประโยคนี้ ❤️</span>
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -538,6 +538,27 @@ export function ReadingEnhancements({
                 </div>
               </div>
 
+              {/* Font Size Adjustment */}
+              <div className="w-full flex flex-col gap-2 shrink-0">
+                <div className="flex items-center justify-between">
+                  <label className="font-prompt text-xs font-medium text-text-muted">ขนาดตัวอักษร</label>
+                  <span className="font-prompt text-xs text-text-muted">{Math.round(fontSizeScale * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs opacity-50 select-none">A</span>
+                  <input
+                    type="range"
+                    min={0.6}
+                    max={1.6}
+                    step={0.05}
+                    value={fontSizeScale}
+                    onChange={(e) => setFontSizeScale(parseFloat(e.target.value))}
+                    className="flex-1 accent-[#E65C00] h-1.5 cursor-pointer"
+                  />
+                  <span className="text-base opacity-50 select-none">A</span>
+                </div>
+              </div>
+
               {/* Card Live Preview (Aspect 1:1) */}
               <div className="w-full max-w-[280px] sm:max-w-[340px] aspect-square rounded-xl overflow-hidden shadow-lg border border-black/5 relative shrink-0">
                 <div
@@ -549,9 +570,12 @@ export function ReadingEnhancements({
                   </span>
                   
                   {/* Highlight Text */}
-                  <p 
-                    style={{ fontFamily: "var(--font-sarabun-google), sans-serif" }}
-                    className="text-sm italic font-medium leading-relaxed text-center flex-1 flex items-center justify-center px-4 overflow-hidden line-clamp-6"
+                  <p
+                    style={{
+                      fontFamily: "var(--font-sarabun-google), sans-serif",
+                      fontSize: `${0.875 * fontSizeScale}rem`,
+                    }}
+                    className="italic font-medium leading-relaxed text-center flex-1 flex items-center justify-center px-4 overflow-hidden line-clamp-6"
                   >
                     {selectionText}
                   </p>
@@ -575,9 +599,9 @@ export function ReadingEnhancements({
                         >
                           {authorName}
                         </p>
-                        <p 
+                        <p
                           style={{ fontFamily: "var(--font-sarabun-google), sans-serif" }}
-                          className="text-[7.5px] opacity-75 truncate"
+                          className="text-[7.5px] opacity-75 line-clamp-2 whitespace-normal wrap-break-word"
                           title={`จากบทความ: ${postTitle}`}
                         >
                           จากบทความ: {postTitle}
@@ -591,7 +615,7 @@ export function ReadingEnhancements({
                         alt="The Isaander"
                         className="h-6 w-auto mb-1 shrink-0"
                         style={{
-                          filter: PRESETS[selectedPresetIdx].canvasText === "#FFFFFF"
+                          filter: PRESETS[selectedPresetIdx].canvasText !== "#2B251F"
                             ? "brightness(0) invert(1)"
                             : "none"
                         }}

@@ -334,6 +334,13 @@ export default async function HomePage() {
     plainAuthorMap[key] = val;
   }
 
+  // Pre-compute image URLs server-side: Wix SDK's media module behaves differently
+  // in Node.js vs browser, causing hydration mismatches if called inside the client component.
+  const feedPosts = latestPosts.map((post) => ({
+    ...post,
+    computedImageUrl: getPostImageUrl(post.media?.wixMedia?.image, 400, 250),
+  }));
+
   return (
     <>
       <WelcomePopupLoader />
@@ -371,7 +378,7 @@ export default async function HomePage() {
 
             {/* Pillar 3: Consolidated Stories Feed */}
             <StoriesFeed
-              posts={latestPosts}
+              posts={feedPosts}
               categoryMap={plainCategoryMap}
               authorMap={plainAuthorMap}
             />
