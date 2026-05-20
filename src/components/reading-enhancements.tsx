@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Sparkles, BookOpen, Download, AlertCircle } from "lucide-react";
+import { X, Sparkles, BookOpen, Download, AlertCircle, Share2 } from "lucide-react";
 
 interface ReadingEnhancementsProps {
   postTitle: string;
@@ -18,26 +18,26 @@ const PRESETS = [
   },
   {
     name: "รัตติกาล",
-    class: "bg-[#181A1B] text-[#E8E6E3] border border-white/5 shadow-md",
-    canvasBg: "#181A1B",
-    canvasText: "#E8E6E3",
+    class: "bg-[#090A0F] text-[#FAF6EE] border border-white/5 shadow-md",
+    canvasBg: "#090A0F",
+    canvasText: "#FAF6EE",
   },
   {
-    name: "อัสดงอีสาน",
-    class: "bg-gradient-to-br from-[#E65C00] to-[#F9D423] text-white border-transparent shadow-md",
+    name: "ส้มแสด",
+    class: "bg-linear-to-br from-[#E65C00] to-[#F9D423] text-white border border-orange-500/10 shadow-md",
     canvasBg: ["#E65C00", "#F9D423"],
     canvasText: "#FFFFFF",
   },
   {
-    name: "แมกไม้เขียว",
-    class: "bg-gradient-to-br from-[#11998e] to-[#38ef7d] text-white border-transparent shadow-md",
+    name: "ไพรพนา",
+    class: "bg-linear-to-br from-[#11998e] to-[#38ef7d] text-white border border-teal-500/10 shadow-md",
     canvasBg: ["#11998e", "#38ef7d"],
     canvasText: "#FFFFFF",
   },
   {
-    name: "ห้วงสมุทร",
-    class: "bg-gradient-to-br from-[#0F2027] via-[#203A43] to-[#2C5364] text-white border-transparent shadow-md",
-    canvasBg: ["#0F2027", "#203A43", "#2C5364"],
+    name: "มหาสมุทร",
+    class: "bg-linear-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] text-white border border-cyan-900/20 shadow-md",
+    canvasBg: ["#0f2027", "#203a43", "#2c5364"],
     canvasText: "#FFFFFF",
   },
 ];
@@ -143,10 +143,15 @@ export function ReadingEnhancements({
         if (rects.length > 0) {
           const rect = rects[0];
           setSelectionText(text);
-          // Center the floating tooltip above the highlight selection
+          // Center the floating tooltip: above on desktop, below on mobile/touch to avoid clashing with native context bubble
+          const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+          const tooltipY = isTouch
+            ? rect.bottom + 12 + window.scrollY
+            : rect.top - 48 + window.scrollY;
+            
           setTooltipCoords({
             x: rect.left + rect.width / 2 + window.scrollX,
-            y: rect.top - 48 + window.scrollY,
+            y: tooltipY,
           });
         }
       } catch {
