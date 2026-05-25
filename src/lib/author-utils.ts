@@ -104,6 +104,15 @@ export const resolveAuthorAsync = unstable_cache(
         slug: localMatch?.slug || firestoreMeta?.slug || memberId,
         name: cached.name || base.name,
         avatar: cached.avatar || base.avatar,
+        bio: localMatch?.bio || base.bio,
+        promptPayId: firestoreMeta?.promptPayId || localMatch?.promptPayId,
+        promptPayName: firestoreMeta?.promptPayName || localMatch?.promptPayName,
+        hireEmail: firestoreMeta?.hireEmail || localMatch?.hireEmail,
+        buyMeCoffeeUrl: firestoreMeta?.buyMeCoffeeUrl || localMatch?.buyMeCoffeeUrl,
+        socialLinks: { ...(base.socialLinks ?? {}), ...(firestoreMeta?.socialLinks ?? {}) },
+        expertise: firestoreMeta?.expertise || localMatch?.expertise,
+        revenueSharePercent: firestoreMeta?.revenueSharePercent ?? localMatch?.revenueSharePercent ?? base.revenueSharePercent,
+        wixMemberId: memberId,
       };
     }
 
@@ -140,12 +149,35 @@ export const resolveAuthorAsync = unstable_cache(
       // We deliberately avoid inheriting the editorial default title
       // ("กองบรรณาธิการ") when this post is NOT by the editorial team.
       const title = localMatch?.title || member?.profile?.title || "นักเขียน";
+      
+      const bio = localMatch?.bio || base.bio || "";
+      const promptPayId = firestoreMeta?.promptPayId || fsMeta?.promptPayId || localMatch?.promptPayId;
+      const promptPayName = firestoreMeta?.promptPayName || fsMeta?.promptPayName || localMatch?.promptPayName;
+      const hireEmail = firestoreMeta?.hireEmail || fsMeta?.hireEmail || localMatch?.hireEmail;
+      const buyMeCoffeeUrl = firestoreMeta?.buyMeCoffeeUrl || fsMeta?.buyMeCoffeeUrl || localMatch?.buyMeCoffeeUrl;
+      const socialLinks = {
+        ...(localMatch?.socialLinks ?? {}),
+        ...(firestoreMeta?.socialLinks ?? {}),
+        ...(fsMeta?.socialLinks ?? {}),
+      };
+      const expertise = firestoreMeta?.expertise || fsMeta?.expertise || localMatch?.expertise;
+      const revenueSharePercent = firestoreMeta?.revenueSharePercent ?? fsMeta?.revenueSharePercent ?? localMatch?.revenueSharePercent ?? base.revenueSharePercent;
+
       return {
         ...base,
         slug,
         name,
         title,
+        bio,
         avatar: photo || localMatch?.avatar || getFallbackAvatar(memberId),
+        promptPayId,
+        promptPayName,
+        hireEmail,
+        buyMeCoffeeUrl,
+        socialLinks,
+        expertise,
+        revenueSharePercent,
+        wixMemberId: memberId,
       };
     } catch {
       // No localMatch + Wix member fetch failed. Don't fall back to the
@@ -154,6 +186,18 @@ export const resolveAuthorAsync = unstable_cache(
       // per-writer URL, and overlay any Firestore metadata we already have.
       if (localMatch) {
         memberAvatarCache.set(memberId, { name: localMatch.name, avatar: "" });
+        if (firestoreMeta) {
+          return {
+            ...localMatch,
+            avatar: localMatch.avatar || getFallbackAvatar(memberId),
+            promptPayId: firestoreMeta.promptPayId ?? localMatch.promptPayId,
+            promptPayName: firestoreMeta.promptPayName ?? localMatch.promptPayName,
+            hireEmail: firestoreMeta.hireEmail ?? localMatch.hireEmail,
+            buyMeCoffeeUrl: firestoreMeta.buyMeCoffeeUrl ?? localMatch.buyMeCoffeeUrl,
+            socialLinks: { ...localMatch.socialLinks, ...firestoreMeta.socialLinks },
+            expertise: firestoreMeta.expertise ?? localMatch.expertise,
+          };
+        }
         return {
           ...localMatch,
           avatar: localMatch.avatar || getFallbackAvatar(memberId),
