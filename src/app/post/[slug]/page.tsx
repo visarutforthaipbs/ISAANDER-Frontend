@@ -326,6 +326,7 @@ export default async function PostPage({
             hireEmail: author.hireEmail,
             promptPayId: author.promptPayId,
             promptPayName: author.promptPayName,
+            buyMeCoffeeUrl: author.buyMeCoffeeUrl,
           }}
           relatedPosts={related}
           categoryMap={categoryMap}

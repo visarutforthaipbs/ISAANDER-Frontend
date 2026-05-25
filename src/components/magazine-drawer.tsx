@@ -14,6 +14,7 @@ interface Author {
   hireEmail?: string;
   promptPayId?: string;
   promptPayName?: string;
+  buyMeCoffeeUrl?: string;
 }
 
 interface Post {
@@ -199,10 +200,22 @@ export function MagazineDrawer({
 
               {/* Tipping & Hiring Integration */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-5 border-t border-black/5 pt-4">
-                <HireButton
-                  writerName={author.name}
-                  hireEmail={author.hireEmail ?? `contact@theisaander.com`}
-                />
+                {author.buyMeCoffeeUrl ? (
+                  <a
+                    href={author.buyMeCoffeeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-[#FCD116] hover:bg-[#FCD116]/95 text-black font-prompt font-bold text-xs px-4 py-2 rounded-full shadow-xs hover:shadow-md transition-all duration-200"
+                  >
+                    <span>☕</span>
+                    <span>เลี้ยงกาแฟ</span>
+                  </a>
+                ) : (
+                  <HireButton
+                    writerName={author.name}
+                    hireEmail={author.hireEmail ?? `contact@theisaander.com`}
+                  />
+                )}
                 <TipButton
                   writerName={author.name}
                   promptPayId={author.promptPayId}
