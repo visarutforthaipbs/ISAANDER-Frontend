@@ -104,7 +104,7 @@ export const resolveAuthorAsync = unstable_cache(
         slug: localMatch?.slug || firestoreMeta?.slug || memberId,
         name: cached.name || base.name,
         avatar: cached.avatar || base.avatar,
-        bio: localMatch?.bio || base.bio,
+        bio: localMatch?.bio || "",
         promptPayId: firestoreMeta?.promptPayId || localMatch?.promptPayId,
         promptPayName: firestoreMeta?.promptPayName || localMatch?.promptPayName,
         hireEmail: firestoreMeta?.hireEmail || localMatch?.hireEmail,
@@ -150,7 +150,7 @@ export const resolveAuthorAsync = unstable_cache(
       // ("กองบรรณาธิการ") when this post is NOT by the editorial team.
       const title = localMatch?.title || member?.profile?.title || "นักเขียน";
       
-      const bio = localMatch?.bio || base.bio || "";
+      const bio = localMatch?.bio || "";
       const promptPayId = firestoreMeta?.promptPayId || fsMeta?.promptPayId || localMatch?.promptPayId;
       const promptPayName = firestoreMeta?.promptPayName || fsMeta?.promptPayName || localMatch?.promptPayName;
       const hireEmail = firestoreMeta?.hireEmail || fsMeta?.hireEmail || localMatch?.hireEmail;
