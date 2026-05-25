@@ -40,9 +40,10 @@ interface TipButtonProps {
   writerName: string;
   promptPayId?: string;
   promptPayName?: string;
+  variant?: "primary" | "secondary";
 }
 
-export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonProps) {
+export function TipButton({ writerName, promptPayId, promptPayName, variant = "secondary" }: TipButtonProps) {
   const [open, setOpen] = useState(false);
   const trapRef = useFocusTrap(open);
 
@@ -53,7 +54,11 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 bg-secondary text-text-main border border-black/10 font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-95 transition-all shadow-sm"
+        className={
+          variant === "primary"
+            ? "inline-flex items-center justify-center gap-2 bg-primary text-white font-prompt font-semibold px-6 py-3 rounded-full hover:brightness-110 transition-all shadow-md text-sm shrink-0"
+            : "inline-flex items-center gap-2 bg-secondary text-text-main border border-black/10 font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-95 transition-all shadow-sm text-sm shrink-0"
+        }
       >
         🍲 เลี้ยงลาบนักเขียน
       </button>
@@ -115,9 +120,10 @@ export function TipButton({ writerName, promptPayId, promptPayName }: TipButtonP
 interface HireButtonProps {
   writerName: string;
   hireEmail?: string;
+  variant?: "primary" | "secondary" | "link";
 }
 
-export function HireButton({ writerName, hireEmail }: HireButtonProps) {
+export function HireButton({ writerName, hireEmail, variant = "primary" }: HireButtonProps) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", org: "", message: "" });
@@ -146,7 +152,13 @@ export function HireButton({ writerName, hireEmail }: HireButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 bg-primary text-white font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-110 transition-all shadow-sm"
+        className={
+          variant === "link"
+            ? "inline-flex items-center gap-1 text-xs font-sarabun font-bold text-text-muted hover:text-text-main transition-colors py-2 px-3"
+            : variant === "secondary"
+            ? "inline-flex items-center gap-2 bg-white text-text-main border border-black/10 font-prompt font-semibold px-5 py-2.5 rounded-full hover:bg-stone-50 transition-all shadow-sm text-sm"
+            : "inline-flex items-center gap-2 bg-primary text-white font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-110 transition-all shadow-sm text-sm"
+        }
       >
         จ้างงาน / ร่วมงาน
       </button>

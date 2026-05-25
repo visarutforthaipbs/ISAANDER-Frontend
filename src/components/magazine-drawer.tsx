@@ -200,27 +200,31 @@ export function MagazineDrawer({
 
               {/* Tipping & Hiring Integration */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-5 border-t border-black/5 pt-4">
-                {author.buyMeCoffeeUrl ? (
+                <TipButton
+                  writerName={author.name}
+                  promptPayId={author.promptPayId || "0627283058"}
+                  promptPayName={author.promptPayName || "The Isaander"}
+                  variant="primary"
+                />
+
+                {author.buyMeCoffeeUrl && (
                   <a
                     href={author.buyMeCoffeeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 bg-[#FCD116] hover:bg-[#FCD116]/95 text-black font-prompt font-bold text-xs px-4 py-2 rounded-full shadow-xs hover:shadow-md transition-all duration-200"
+                    className="inline-flex items-center gap-1.5 bg-[#FCD116] hover:bg-[#FCD116]/95 text-black font-prompt font-bold text-xs px-4 py-2.5 rounded-full shadow-xs hover:shadow-md transition-all duration-200"
                   >
                     <span>☕</span>
                     <span>เลี้ยงกาแฟ</span>
                   </a>
-                ) : (
-                  <HireButton
-                    writerName={author.name}
-                    hireEmail={author.hireEmail ?? `contact@theisaander.com`}
-                  />
                 )}
-                <TipButton
+
+                <HireButton
                   writerName={author.name}
-                  promptPayId={author.promptPayId}
-                  promptPayName={author.promptPayName}
+                  hireEmail={author.hireEmail ?? `contact@theisaander.com`}
+                  variant="link"
                 />
+
                 <Link
                   href={`/author/${author.slug}`}
                   className="inline-flex items-center gap-1 text-xs font-sarabun font-bold text-text-muted hover:text-text-main transition-colors py-2 px-3"
