@@ -133,6 +133,10 @@ export default async function PostPage({
       ? await getRelatedPosts(post.categoryIds, post._id ?? "")
       : [];
 
+  const relatedCategoryLabel = related[0]?.categoryIds?.[0]
+    ? categoryMap.get(related[0].categoryIds[0]) ?? null
+    : null;
+
   const inArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT;
   const belowArticleAdSlot = process.env.NEXT_PUBLIC_ADSENSE_BELOW_ARTICLE_SLOT;
 
@@ -287,6 +291,8 @@ export default async function PostPage({
           <div className="prose-wrapper">
             <RichContentRenderer
               content={post.richContent as Parameters<typeof RichContentRenderer>[0]["content"]}
+              relatedPost={related[0]}
+              relatedCategoryLabel={relatedCategoryLabel}
             />
           </div>
 

@@ -1,5 +1,6 @@
 import { media } from "@wix/sdk";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { InlineRelatedReads } from "@/components/inline-related-reads";
 
 
 
@@ -431,15 +432,28 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
 export function RichContentRenderer({
   content,
+  relatedPost,
+  relatedCategoryLabel,
 }: {
   content: { nodes?: RichContentNode[] } | null | undefined;
+  relatedPost?: any;
+  relatedCategoryLabel?: string | null;
 }) {
   if (!content?.nodes) return null;
 
+  const nodes = content.nodes;
+  // Calculate middle insertion index for long articles (more than 5 nodes)
+  const insertIndex = nodes.length > 5 ? Math.floor(nodes.length / 2) : -1;
+
   return (
     <div className="rich-content">
-      {content.nodes.map((node, i) => (
-        <RichContentNode key={node.id || i} node={node} />
+      {nodes.map((node, i) => (
+        <div key={node.id || i}>
+          <RichContentNode node={node} />
+          {i === insertIndex && relatedPost && (
+            <InlineRelatedReads post={relatedPost} categoryLabel={relatedCategoryLabel} />
+          )}
+        </div>
       ))}
     </div>
   );

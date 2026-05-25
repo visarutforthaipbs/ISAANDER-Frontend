@@ -48,7 +48,7 @@ export function ReadingProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label="ความคืบหน้าการอ่าน"
-      className={`fixed top-14 left-0 z-50 h-[3px] bg-primary transition-transform duration-300 ${
+      className={`fixed top-14 left-0 z-50 h-[3px] bg-gradient-to-r from-[#E65C00] via-[#FF8C00] to-[#FBC02D] transition-transform duration-300 ${
         headerVisible ? "translate-y-0" : "-translate-y-14"
       }`}
       style={{ width: "var(--rp, 0%)" }}
