@@ -435,14 +435,16 @@ export default async function AuthorProfilePage({
                 );
               })}
 
-            <HireButton
-                writerName={writer.name}
-                hireEmail={writer.hireEmail ?? `contact@theisaander.com`}
-              />
             <TipButton
                 writerName={writer.name}
                 promptPayId={writer.promptPayId}
                 promptPayName={writer.promptPayName}
+                variant="primary"
+              />
+            <HireButton
+                writerName={writer.name}
+                hireEmail={writer.hireEmail ?? `contact@theisaander.com`}
+                variant="secondary"
               />
           </div>
         </section>
