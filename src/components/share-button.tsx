@@ -47,8 +47,6 @@ export function TipButton({ writerName, promptPayId, promptPayName, variant = "s
   const [open, setOpen] = useState(false);
   const trapRef = useFocusTrap(open);
 
-  if (!promptPayId) return null;
-
   return (
     <>
       <button
@@ -56,7 +54,7 @@ export function TipButton({ writerName, promptPayId, promptPayName, variant = "s
         onClick={() => setOpen(true)}
         className={
           variant === "primary"
-            ? "inline-flex items-center justify-center gap-2 bg-primary text-white font-prompt font-semibold px-6 py-3 rounded-full hover:brightness-110 transition-all shadow-md text-sm shrink-0"
+            ? "inline-flex items-center justify-center gap-2 bg-black text-white font-prompt font-semibold px-6 py-3 rounded-full hover:bg-stone-900 transition-all shadow-md text-sm shrink-0"
             : "inline-flex items-center gap-2 bg-secondary text-text-main border border-black/10 font-prompt font-semibold px-5 py-2.5 rounded-full hover:brightness-95 transition-all shadow-sm text-sm shrink-0"
         }
       >
@@ -102,7 +100,15 @@ export function TipButton({ writerName, promptPayId, promptPayName, variant = "s
               สนับสนุน{writerName} โดยตรง 100%
             </p>
 
-            <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} goldenTheme />
+            {promptPayId ? (
+              <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} goldenTheme />
+            ) : (
+              <div className="bg-white/20 border border-white/10 rounded-xl p-4 text-center">
+                <p className="font-sarabun text-sm text-stone-900 leading-relaxed font-medium">
+                  คุณ {writerName} ยังไม่ได้เปิดช่องทางสนับสนุนออนไลน์ในระบบ ร่วมกดแชร์ประโยคเด็ด หรือติดตามผลงานเพื่อส่งกำลังใจได้เลยนะ! 🍲❤️
+                </p>
+              </div>
+            )}
 
             <p className="text-center font-sarabun text-xs text-stone-800/60 mt-3">
               ขอบคุณสนับสนุนนักเขียนจากใจ 🙏

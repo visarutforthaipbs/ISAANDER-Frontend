@@ -202,8 +202,8 @@ export function MagazineDrawer({
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-5 border-t border-black/5 pt-4">
                 <TipButton
                   writerName={author.name}
-                  promptPayId={author.promptPayId || "0627283058"}
-                  promptPayName={author.promptPayName || "The Isaander"}
+                  promptPayId={author.promptPayId}
+                  promptPayName={author.promptPayName}
                   variant="primary"
                 />
 
