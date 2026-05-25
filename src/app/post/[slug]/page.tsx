@@ -17,6 +17,7 @@ import { TableOfContents } from "@/components/table-of-contents";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { ShareButton } from "@/components/share-button";
 import { ReadingEnhancements } from "@/components/reading-enhancements";
+import { MagazineDrawer } from "@/components/magazine-drawer";
 
 // --- Data Fetching ---
 
@@ -304,22 +305,6 @@ export default async function PostPage({
           )}
         </article>
 
-        {/* End-of-article share CTA */}
-        {/* Signal 39: Breath Rule - Insert 3-5 seconds of low-bitrate space after major insights */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 share-cta-wrapper">
-          <div className="border-t border-black/10 pt-10 flex flex-col items-center gap-3 text-center">
-            <p className="font-prompt font-semibold text-text-main">
-              อ่านจบแล้ว — แชร์บทความนี้
-            </p>
-            <ShareButton title={post.title ?? ""} />
-          </div>
-        </div>
-
-        {/* Tipping Section */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10 tipping-section-wrapper">
-          <TipSection author={author} />
-        </div>
-
         {belowArticleAdSlot && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10 adsense-slot-wrapper">
             <AdSenseSlot
@@ -329,75 +314,23 @@ export default async function PostPage({
           </div>
         )}
 
-        {/* Related Posts */}
-        {related.length > 0 && (
-          <div className="related-posts-wrapper">
-            <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-16 mb-8">
-              <h2 className="font-prompt text-lg font-semibold text-text-main mb-6 flex items-center gap-2">
-                <span className="w-1 h-6 bg-primary rounded-full" aria-hidden="true" />
-                บทความที่เกี่ยวข้อง
-              </h2>
-              <div className="flex flex-col gap-4">
-                {related.map((rp) => {
-                  const rpImg = rp.media?.wixMedia?.image
-                    ? (() => {
-                        try {
-                          return media.getScaledToFillImageUrl(
-                            rp.media!.wixMedia!.image!,
-                            300,
-                            300,
-                            {}
-                          );
-                        } catch {
-                          return null;
-                        }
-                      })()
-                    : null;
-
-                  return (
-                    <Link
-                      key={rp._id}
-                      href={`/post/${rp.slug}`}
-                      className="flex gap-4 bg-surface rounded-lg shadow-sm p-3 items-center hover:shadow-md transition-shadow"
-                    >
-                      <div className="w-[25%] shrink-0">
-                        {rpImg ? (
-                          <div className="relative rounded-md aspect-square w-full overflow-hidden">
-                            <Image
-                              src={rpImg}
-                              alt={rp.title ?? ""}
-                              fill
-                              sizes="(max-width: 768px) 25vw, 100px"
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="bg-slate-200 rounded-md aspect-square w-full" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        {rp.categoryIds?.[0] && categoryMap.get(rp.categoryIds[0]) && (
-                          <span className="inline-block bg-secondary/15 text-secondary text-xs font-sarabun font-medium px-2.5 py-0.5 rounded-full mb-1">
-                            {categoryMap.get(rp.categoryIds[0])}
-                          </span>
-                        )}
-                        <h3 className="font-sarabun text-sm font-medium text-text-main leading-relaxed line-clamp-2">
-                          {rp.title}
-                        </h3>
-                        <time
-                          dateTime={rp.lastPublishedDate ? new Date(rp.lastPublishedDate).toISOString() : undefined}
-                          className="font-sarabun text-xs text-text-muted mt-1 block"
-                        >
-                          {formatDate(rp.lastPublishedDate)}
-                        </time>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-        )}
+        {/* Premium Discovery Lounge Drawer */}
+        <MagazineDrawer
+          postTitle={post.title ?? ""}
+          author={{
+            name: author.name,
+            avatar: author.avatar,
+            title: author.title,
+            bio: author.bio,
+            slug: author.slug,
+            hireEmail: author.hireEmail,
+            promptPayId: author.promptPayId,
+            promptPayName: author.promptPayName,
+          }}
+          relatedPosts={related}
+          categoryMap={categoryMap}
+          categoryLabel={categoryLabel}
+        />
       </main>
 
       <ReadingEnhancements
