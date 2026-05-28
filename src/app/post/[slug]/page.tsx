@@ -204,26 +204,6 @@ export default async function PostPage({
       />
 
       <main id="main-content" className="flex-1 pb-28">
-        {/* Cover Image — full-bleed with gradient transition */}
-        {coverUrl && (
-          <div className="relative">
-            <div className="relative w-full aspect-[16/10] sm:aspect-video">
-              <Image
-                src={coverUrl}
-                alt={post.title ?? ""}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div
-              className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-background to-transparent"
-              aria-hidden="true"
-            />
-          </div>
-        )}
-
         <article className="max-w-3xl mx-auto px-4 sm:px-6">
           {/* Meta */}
           <div className="pt-6 pb-4">

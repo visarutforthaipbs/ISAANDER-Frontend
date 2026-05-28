@@ -99,13 +99,17 @@ export function extractHeadings(
   return headings;
 }
 
-function getWixImageUrl(src: { url?: string } | null | undefined, w: number, h: number): string | null {
-  if (!src?.url) return null;
+function getWixImageUrl(src: { url?: string; id?: string } | null | undefined, w: number, h: number): string | null {
+  if (!src) return null;
+  
+  const targetUrl = src.url || (src.id ? `wix:image://v1/${src.id}/image.jpg` : null);
+  if (!targetUrl) return null;
+
   try {
-    return media.getScaledToFillImageUrl(src.url, w, h, {});
+    return media.getScaledToFillImageUrl(targetUrl, w, h, {});
   } catch {
     // If it's already a full URL, return as-is
-    if (src.url.startsWith("http")) return src.url;
+    if (targetUrl.startsWith("http")) return targetUrl;
     return null;
   }
 }
