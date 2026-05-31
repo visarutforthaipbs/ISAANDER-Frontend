@@ -35,6 +35,8 @@ export function PostHeader({ post }: PostHeaderProps) {
             <img
               src="/logo-black.svg"
               alt="The Isaander"
+              width={116}
+              height={32}
               className="h-8 w-auto"
             />
           </Link>

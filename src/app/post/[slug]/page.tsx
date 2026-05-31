@@ -18,6 +18,7 @@ import { AdSenseSlot } from "@/components/adsense-slot";
 import { ShareButton } from "@/components/share-button";
 import { ReadingEnhancements } from "@/components/reading-enhancements";
 import { MagazineDrawer } from "@/components/magazine-drawer";
+import { FollowButton } from "@/components/follow-button";
 
 // --- Data Fetching ---
 
@@ -48,6 +49,21 @@ async function getRelatedPosts(categoryIds: string[], currentId: string) {
       paging: { limit: 4 },
     });
     return (items ?? []).filter((p) => p._id !== currentId).slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+// More posts from the same writer (KOL binge rail). Filters the recent feed
+// by the post's Wix memberId so readers can follow a specific voice.
+async function getPostsByMember(memberId: string, currentId: string) {
+  try {
+    const { posts: items } = await wixClient.posts.listPosts({
+      paging: { limit: 100 },
+    });
+    return (items ?? [])
+      .filter((p) => p.memberId === memberId && p._id !== currentId)
+      .slice(0, 6);
   } catch {
     return [];
   }
@@ -134,6 +150,12 @@ export default async function PostPage({
       ? await getRelatedPosts(post.categoryIds, post._id ?? "")
       : [];
 
+  // KOL rail: other work by this specific writer (skip the editorial org).
+  const authorPosts =
+    post.memberId && author.slug !== "theisaander"
+      ? await getPostsByMember(post.memberId, post._id ?? "")
+      : [];
+
   const relatedCategoryLabel = related[0]?.categoryIds?.[0]
     ? categoryMap.get(related[0].categoryIds[0]) ?? null
     : null;
@@ -217,25 +239,39 @@ export default async function PostPage({
             </h1>
 
             {/* Author Byline */}
-            <Link
-              href={`/author/${author.slug}`}
-              className="flex items-center gap-3 mt-4 group"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={author.avatar}
-                alt={author.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
+            <div className="flex items-center justify-between gap-3 mt-4">
+              <Link
+                href={`/author/${author.slug}`}
+                className="flex items-center gap-3 group min-w-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={author.avatar}
+                  alt={author.name}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
+                />
+                <div className="min-w-0">
+                  <span className="font-prompt font-semibold text-sm text-text-main group-hover:text-primary transition-colors">
+                    {author.name}
+                  </span>
+                  <span className="block text-xs text-text-muted font-sarabun truncate">
+                    {author.title}
+                  </span>
+                </div>
+              </Link>
+
+              <FollowButton
+                writer={{
+                  slug: author.slug,
+                  name: author.name,
+                  avatar: author.avatar,
+                  title: author.title,
+                }}
+                variant="compact"
               />
-              <div>
-                <span className="font-prompt font-semibold text-sm text-text-main group-hover:text-primary transition-colors">
-                  {author.name}
-                </span>
-                <span className="block text-xs text-text-muted font-sarabun">
-                  {author.title}
-                </span>
-              </div>
-            </Link>
+            </div>
 
             <div className="flex items-center gap-4 mt-3 text-sm text-text-muted font-sarabun">
               <time dateTime={post.lastPublishedDate ? new Date(post.lastPublishedDate).toISOString() : undefined}>
@@ -252,15 +288,6 @@ export default async function PostPage({
 
 
 
-          {inArticleAdSlot && (
-            <div className="adsense-slot-wrapper">
-              <AdSenseSlot
-                slot={inArticleAdSlot}
-                className="my-8 rounded-lg border border-black/10 bg-surface p-3"
-              />
-            </div>
-          )}
-
           {/* Table of Contents */}
           <div className="toc-wrapper">
             <TableOfContents
@@ -274,6 +301,16 @@ export default async function PostPage({
               content={post.richContent as Parameters<typeof RichContentRenderer>[0]["content"]}
               relatedPost={related[0]}
               relatedCategoryLabel={relatedCategoryLabel}
+              adSlot={
+                inArticleAdSlot ? (
+                  <div className="adsense-slot-wrapper">
+                    <AdSenseSlot
+                      slot={inArticleAdSlot}
+                      className="my-8 rounded-lg border border-black/10 bg-surface p-3"
+                    />
+                  </div>
+                ) : undefined
+              }
             />
           </div>
 
@@ -284,6 +321,85 @@ export default async function PostPage({
             </div>
           )}
         </article>
+
+        {/* More from this writer — KOL binge rail */}
+        {authorPosts.length > 0 && (
+          <section
+            aria-label={`เรื่องอื่นจาก ${author.name}`}
+            className="max-w-3xl mx-auto px-4 sm:px-6 mt-12"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-prompt font-bold text-text-main text-base flex items-center gap-2">
+                <img
+                  src={author.avatar}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 rounded-full object-cover border border-black/10"
+                />
+                <span>เรื่องอื่นจาก {author.name}</span>
+              </h2>
+              <Link
+                href={`/author/${author.slug}`}
+                className="text-xs font-prompt font-semibold text-[#E65C00] hover:underline shrink-0"
+              >
+                ดูทั้งหมด
+              </Link>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {authorPosts.map((ap, i) => {
+                const apImg = ap.media?.wixMedia?.image
+                  ? (() => {
+                      try {
+                        return media.getScaledToFillImageUrl(
+                          ap.media!.wixMedia!.image!,
+                          400,
+                          260,
+                          {}
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()
+                  : null;
+
+                return (
+                  <Link
+                    key={ap._id || i}
+                    href={`/post/${ap.slug}`}
+                    className="group shrink-0 w-60 sm:w-65 snap-start bg-white border border-black/5 hover:border-black/10 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="relative aspect-video bg-black/5 overflow-hidden">
+                      {apImg ? (
+                        <Image
+                          src={apImg}
+                          alt={ap.title ?? ""}
+                          fill
+                          sizes="(max-width: 640px) 240px, 260px"
+                          className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-stone-100" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-prompt font-bold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-[#E65C00] transition-colors duration-200">
+                        {ap.title}
+                      </h3>
+                      <time
+                        dateTime={ap.lastPublishedDate ? new Date(ap.lastPublishedDate).toISOString() : undefined}
+                        className="block text-[10px] text-text-muted font-sarabun mt-2"
+                      >
+                        {formatDate(ap.lastPublishedDate)}
+                      </time>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {belowArticleAdSlot && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-10 adsense-slot-wrapper">

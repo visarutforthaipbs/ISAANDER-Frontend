@@ -9,6 +9,8 @@ import { StickyHeader, MobileBottomNav } from "@/components/navigation";
 import { WelcomePopupLoader } from "@/components/welcome-popup-loader";
 import { LoginCta } from "@/components/login-cta";
 import { StoriesFeed } from "@/components/stories-feed";
+import { KOLSpotlight } from "@/components/kol-spotlight";
+import { LarbMeter } from "@/components/larb-meter";
 
 // --- Data Fetching ---
 
@@ -177,15 +179,7 @@ function HeroDeepDive({
   );
 }
 
-function VoicesCommunity({
-  writers,
-}: {
-  writers: Awaited<ReturnType<typeof fetchWixWriters>>;
-}) {
-  const filteredWriters = (writers ?? [])
-    .filter((w) => w.slug !== "theisaander" && w.title !== "กองบรรณาธิการ" && w.name !== "กองบรรณาธิการ")
-    .slice(0, 3);
-
+function VoicesCommunity() {
   return (
     <section aria-label="นักเขียนและเสียงของชุมชน" className="w-full">
       <p className="text-text-muted mb-2" style={chunkLabelStyle}>
@@ -195,95 +189,38 @@ function VoicesCommunity({
         เสียงจริงจากคนท้องถิ่น
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Creator Platform CTA */}
-        <div
-          className="border border-isaander-gold/20 flex flex-col justify-between"
-          style={{
-            background: "linear-gradient(135deg, var(--color-isaander-cream) 0%, var(--color-isaander-offwhite) 60%, color-mix(in srgb, var(--color-isaander-light-blue) 20%, transparent) 100%)",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div>
-            <span
-              className="inline-block bg-isaander-orange text-white font-sarabun font-bold mb-3 shadow-xs"
-              style={{ fontSize: "0.625rem", letterSpacing: "0.04em", padding: "3px 8px", borderRadius: "4px" }}
-            >
-              CREATOR PLATFORM
-            </span>
-            <h3 className="font-prompt font-bold text-text-main text-lg mb-2 leading-snug">
-              อยากเล่าเรื่องจากพื้นที่ของคุณไหม?
-            </h3>
-            <p className="font-sarabun text-sm text-text-muted leading-relaxed mb-6">
-              ร่วมสนับสนุนมุมมองจากบ้านเกิดของคุณ เขียนเรื่องราว วัฒนธรรม หรือประเด็นทางสังคม และแบ่งปันให้ผู้คนได้รับรู้ พร้อมรับส่วนแบ่งรายได้อย่างเป็นธรรม
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap gap-3 items-center">
-            <LoginCta />
-            <Link
-              href="/author"
-              className="inline-flex items-center gap-1.5 text-text-muted font-sarabun text-xs font-semibold hover:text-text-main transition-colors py-2 px-3"
-            >
-              ทำความรู้จักนักเขียนของเรา →
-            </Link>
-          </div>
+      {/* Creator Platform CTA - Full Width Premium Glassmorphic Card */}
+      <div
+        className="border border-isaander-gold/20 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6"
+        style={{
+          background: "linear-gradient(135deg, var(--color-isaander-cream) 0%, var(--color-isaander-offwhite) 60%, color-mix(in srgb, var(--color-isaander-light-blue) 20%, transparent) 100%)",
+          borderRadius: "12px",
+          padding: "32px",
+        }}
+      >
+        <div className="flex-1 min-w-0">
+          <span
+            className="inline-block bg-isaander-orange text-white font-sarabun font-bold mb-3 shadow-xs"
+            style={{ fontSize: "0.625rem", letterSpacing: "0.04em", padding: "3px 8px", borderRadius: "4px" }}
+          >
+            CREATOR PLATFORM
+          </span>
+          <h3 className="font-prompt font-bold text-text-main text-xl mb-2 leading-snug">
+            อยากเล่าเรื่องจากพื้นที่ของคุณไหม?
+          </h3>
+          <p className="font-sarabun text-sm text-text-muted leading-relaxed max-w-2xl">
+            ร่วมสนับสนุนมุมมองจากบ้านเกิดของคุณ เขียนเรื่องราว วัฒนธรรม หรือประเด็นทางสังคม และแบ่งปันให้ผู้คนได้รับรู้ พร้อมรับส่วนแบ่งรายได้อย่างเป็นธรรม
+          </p>
         </div>
-
-        {/* Right: Featured writers list */}
-        <div className="bg-surface border border-black/5 p-6 flex flex-col justify-between" style={{ borderRadius: "12px" }}>
-          <div>
-            <h3 className="font-prompt font-bold text-text-muted text-xs mb-4 uppercase tracking-wider">
-              นักเขียนเด่น
-            </h3>
-            <div className="flex flex-col gap-3">
-              {filteredWriters.map((writer) => (
-                <Link
-                  key={writer.slug}
-                  href={`/author/${writer.slug}`}
-                  className="flex items-center gap-3 bg-stone-50 hover:bg-stone-100/80 p-3 transition-colors border border-black/5 hover:border-black/10"
-                  style={{ borderRadius: "8px" }}
-                >
-                  {writer.avatar ? (
-                    <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 border border-black/5">
-                      <Image
-                        src={writer.avatar}
-                        alt={writer.name}
-                        fill
-                        unoptimized
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="bg-primary/10 flex items-center justify-center shrink-0 w-9 h-9 rounded-full border border-black/5">
-                      <span className="font-prompt font-bold text-primary" style={{ fontSize: "0.75rem" }}>
-                        {writer.name.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="font-sarabun font-semibold text-text-main text-sm truncate">
-                      {writer.name}
-                    </p>
-                    <p className="text-text-muted font-sarabun mt-0.5" style={{ fontSize: "0.625rem", letterSpacing: "0.04em" }}>
-                      {writer.postCount} บทความ · {writer.totalViews.toLocaleString()} views
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {writers.length > 3 && (
-            <Link
-              href="/author"
-              className="block text-center font-sarabun font-bold mt-4 hover:underline"
-              style={{ fontSize: "0.75rem", color: "var(--color-isaander-orange)" }}
-            >
-              ดูนักเขียนทั้งหมด →
-            </Link>
-          )}
+        
+        <div className="flex flex-row md:flex-col lg:flex-row flex-wrap gap-3 items-center shrink-0 justify-start md:justify-center">
+          <LoginCta />
+          <Link
+            href="/author"
+            className="inline-flex items-center gap-1.5 text-text-muted font-sarabun text-xs font-semibold hover:text-text-main transition-colors py-2.5 px-4 bg-white border border-black/5 hover:border-black/10 rounded-full"
+          >
+            ทำความรู้จักนักเขียนของเรา →
+          </Link>
         </div>
       </div>
     </section>
@@ -341,6 +278,10 @@ export default async function HomePage() {
     computedImageUrl: getPostImageUrl(post.media?.wixMedia?.image, 400, 250),
   }));
 
+  // Select the featured spotlight writer
+  const spotlightWriter = (writers ?? [])
+    .filter((w) => w.slug !== "theisaander" && w.title !== "กองบรรณาธิการ" && w.name !== "กองบรรณาธิการ")?.[0] ?? null;
+
   return (
     <>
       <WelcomePopupLoader />
@@ -374,7 +315,19 @@ export default async function HomePage() {
             <HeroDeepDive post={heroPost} categoryMap={categoryMap} authorMap={authorMap} />
 
             {/* Pillar 2: Voices & Community */}
-            <VoicesCommunity writers={writers} />
+            <VoicesCommunity />
+
+            {/* Spotlight & Larb Meter Section */}
+            {spotlightWriter && (
+              <section aria-label="ผู้เขียนเด่นและภารกิจชุมชน" className="w-full">
+                <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6 items-stretch">
+                  <KOLSpotlight writer={spotlightWriter} />
+                  <div className="flex items-stretch">
+                    <LarbMeter />
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Pillar 3: Consolidated Stories Feed */}
             <StoriesFeed

@@ -436,6 +436,7 @@ export default async function AuthorProfilePage({
               })}
 
             <TipButton
+                writerSlug={writer.slug}
                 writerName={writer.name}
                 promptPayId={writer.promptPayId}
                 promptPayName={writer.promptPayName}

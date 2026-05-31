@@ -26,6 +26,7 @@ export interface WriterMetadata {
   /** Admin-only notes */
   notes?: string;
   isActive?: boolean;
+  totalTips?: number;
   updatedAt?: FieldValue | string;
   updatedBy?: string;
   createdAt?: FieldValue | string;

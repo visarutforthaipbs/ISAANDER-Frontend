@@ -37,15 +37,55 @@ export function ShareButton({ title }: { title: string }) {
 // TipButton — opens a PromptPay QR modal
 // ---------------------------------------------------------------------------
 interface TipButtonProps {
+  writerSlug: string;
   writerName: string;
   promptPayId?: string;
   promptPayName?: string;
   variant?: "primary" | "secondary";
 }
 
-export function TipButton({ writerName, promptPayId, promptPayName, variant = "secondary" }: TipButtonProps) {
+export function TipButton({ writerSlug, writerName, promptPayId, promptPayName, variant = "secondary" }: TipButtonProps) {
   const [open, setOpen] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [tipped, setTipped] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; x: number; color: string; size: number; delay: number }[]>([]);
   const trapRef = useFocusTrap(open);
+
+  const handleReportTip = async () => {
+    setReporting(true);
+    try {
+      const res = await fetch("/api/tips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: writerSlug }),
+      });
+      if (res.ok) {
+        setTipped(true);
+        // Generate confetti particles
+        const colors = ["#fb512e", "#af8928", "#f2eb67", "#100d0c", "#5e0203", "#223381"];
+        const p = Array.from({ length: 40 }).map((_, i) => ({
+          id: i,
+          x: Math.random() * 100, // horizontal start percentage
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 8 + 6,
+          delay: Math.random() * 0.5,
+        }));
+        setParticles(p);
+      } else {
+        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
+      }
+    } catch {
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setReporting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setTipped(false);
+    setParticles([]);
+  };
 
   return (
     <>
@@ -65,21 +105,49 @@ export function TipButton({ writerName, promptPayId, promptPayName, variant = "s
         <div
           ref={trapRef}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
+          onClick={handleClose}
           role="dialog"
           aria-modal="true"
           aria-labelledby="tip-title"
         >
           <div
-            className="relative rounded-2xl shadow-2xl w-full max-w-sm p-6"
-            style={{ backgroundColor: "#C5A84A" }}
+            className="relative bg-isaander-gold rounded-lg shadow-2xl w-full max-w-sm p-6 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Confetti Particles Container */}
+            {tipped && particles.length > 0 && (
+              <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none z-10">
+                <style dangerouslySetInnerHTML={{__html: `
+                  @keyframes floatUp {
+                    0% { transform: translateY(120%) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+                  }
+                  .confetti-particle {
+                    animation: floatUp 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+                  }
+                `}} />
+                {particles.map((p) => (
+                  <div
+                    key={p.id}
+                    className="confetti-particle absolute bottom-0"
+                    style={{
+                      left: `${p.x}%`,
+                      width: `${p.size}px`,
+                      height: `${p.size}px`,
+                      backgroundColor: p.color,
+                      borderRadius: p.id % 2 === 0 ? "50%" : "2px",
+                      animationDelay: `${p.delay}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               aria-label="ปิด"
-              onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/10 text-stone-800/70 hover:text-stone-900 transition-colors"
+              onClick={handleClose}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/10 text-stone-800/70 hover:text-stone-900 transition-colors z-20"
             >
               <X className="w-5 h-5" />
             </button>
@@ -101,7 +169,35 @@ export function TipButton({ writerName, promptPayId, promptPayName, variant = "s
             </p>
 
             {promptPayId ? (
-              <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} goldenTheme />
+              <>
+                <PromptPayQR promptPayId={promptPayId} promptPayName={promptPayName ?? writerName} goldenTheme />
+                
+                {/* Self-Reporting Tipping Action */}
+                <div className="mt-5 border-t border-black/10 pt-4 flex flex-col gap-2 relative z-20">
+                  {!tipped ? (
+                    <button
+                      type="button"
+                      disabled={reporting}
+                      onClick={handleReportTip}
+                      className="w-full bg-stone-900 hover:bg-stone-900/90 text-white font-prompt font-bold text-sm py-3 px-4 rounded-full transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                      {reporting ? "กำลังบันทึก..." : "ฉันสแกนเลี้ยงลาบแล้ว! 🍛🎉"}
+                    </button>
+                  ) : (
+                    <div className="text-center py-2 flex flex-col items-center gap-1">
+                      <div className="w-8 h-8 rounded-full bg-stone-950/20 flex items-center justify-center text-stone-950">
+                        <Check className="w-5 h-5" />
+                      </div>
+                      <p className="font-prompt font-bold text-stone-950 text-sm">
+                        อนุโมทนาสาธุ! เลี้ยงลาบสำเร็จ 🍛✨
+                      </p>
+                      <p className="font-sarabun text-xs text-stone-900/80">
+                        ยอดความตั้งใจสนับสนุนถูกนับเข้าไปในระบบแล้ว
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="bg-white/20 border border-white/10 rounded-xl p-4 text-center">
                 <p className="font-sarabun text-sm text-stone-900 leading-relaxed font-medium">
@@ -179,7 +275,7 @@ export function HireButton({ writerName, hireEmail, variant = "primary" }: HireB
           aria-labelledby="hire-title"
         >
           <div
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+            className="relative bg-white rounded-lg shadow-2xl w-full max-w-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button

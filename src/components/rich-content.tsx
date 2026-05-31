@@ -262,7 +262,7 @@ function RichContentNode({ node }: { node: RichContentNode }) {
 
     case "BLOCKQUOTE":
       return (
-        <blockquote className="relative my-12 px-6 sm:px-10 py-4 border-l-4 border-isaander-orange bg-gradient-to-r from-isaander-orange/5 to-transparent rounded-r-xl">
+        <blockquote className="relative my-12 px-6 sm:px-10 py-4 border-l-4 border-isaander-orange bg-linear-to-r from-isaander-orange/5 to-transparent rounded-r-xl">
           <span 
             className="absolute top-2 left-4 text-6xl text-isaander-orange/20 font-serif leading-none select-none pointer-events-none"
             aria-hidden="true"
@@ -438,22 +438,29 @@ export function RichContentRenderer({
   content,
   relatedPost,
   relatedCategoryLabel,
+  adSlot,
 }: {
   content: { nodes?: RichContentNode[] } | null | undefined;
   relatedPost?: any;
   relatedCategoryLabel?: string | null;
+  adSlot?: React.ReactNode;
 }) {
   if (!content?.nodes) return null;
 
   const nodes = content.nodes;
   // Calculate middle insertion index for long articles (more than 5 nodes)
   const insertIndex = nodes.length > 5 ? Math.floor(nodes.length / 2) : -1;
+  // Inject the in-article ad after the reader has engaged with the opening
+  // (a few content nodes in) rather than before the first paragraph. Only
+  // for articles long enough that the ad doesn't crowd the intro.
+  const adIndex = adSlot && nodes.length > 4 ? 2 : -1;
 
   return (
     <div className="rich-content">
       {nodes.map((node, i) => (
         <div key={node.id || i}>
           <RichContentNode node={node} />
+          {i === adIndex && adSlot}
           {i === insertIndex && relatedPost && (
             <InlineRelatedReads post={relatedPost} categoryLabel={relatedCategoryLabel} />
           )}

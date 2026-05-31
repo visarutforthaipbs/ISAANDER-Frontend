@@ -242,8 +242,8 @@ html.is-focus-mode .rich-content li {
 
 html.is-focus-mode .prose-wrapper blockquote,
 html.is-focus-mode .rich-content blockquote {
-  background: rgba(230, 92, 0, 0.05) !important;
-  border-left-color: #E65C00 !important;
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent) !important;
+  border-left-color: var(--color-accent) !important;
 }
 
 html.is-focus-mode .back-to-top {
